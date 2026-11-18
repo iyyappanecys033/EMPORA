@@ -19,6 +19,7 @@ replay_pid*
 node_modules/
 **/node_modules/
 springapp/springbackend/build/
+springapp/springbackend/node/
 .pnp
 .pnp.js
 npm-debug.log*

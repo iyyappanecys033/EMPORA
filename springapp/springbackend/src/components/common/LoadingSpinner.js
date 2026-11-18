@@ -1,0 +1,67 @@
+import React from 'react';
+
+export const LoadingSpinner = ({ message = 'Loading...' }) => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '48px 16px',
+        color: '#64748b',
+        fontSize: '14px'
+      }}
+    >
+      <div
+        style={{
+          width: '36px',
+          height: '36px',
+          border: '3px solid #e2e8f0',
+          borderTopColor: '#2563eb',
+          borderRadius: '50%',
+          animation: 'epams-spin 0.8s linear infinite',
+          marginBottom: '12px'
+        }}
+      />
+      <span>{message}</span>
+      <style>{`
+        @keyframes epams-spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export const EmptyState = ({
+  icon = '📭',
+  title = 'No items found',
+  description = 'There are no records matching your request at this time.',
+  action = null
+}) => {
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        padding: '48px 24px',
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+        border: '1px dashed #cbd5e1',
+        margin: '16px 0'
+      }}
+    >
+      <div style={{ fontSize: '42px', marginBottom: '8px' }}>{icon}</div>
+      <h3 style={{ margin: '0 0 6px', color: '#1e293b', fontSize: '16px', fontWeight: 600 }}>
+        {title}
+      </h3>
+      <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '13px', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
+        {description}
+      </p>
+      {action && <div>{action}</div>}
+    </div>
+  );
+};
+
+export default LoadingSpinner;
+
