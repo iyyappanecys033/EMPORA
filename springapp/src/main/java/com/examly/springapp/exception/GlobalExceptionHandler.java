@@ -2,7 +2,10 @@ package com.examly.springapp.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,11 +13,14 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import jakarta.persistence.OptimisticLockException;
 
 import java.time.LocalDateTime;
@@ -27,6 +33,8 @@ import java.util.*;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
@@ -140,6 +148,38 @@ public class GlobalExceptionHandler {
                 "https://epams.internal/errors/invalid-parameter", request, null);
     }
 
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleUnsupportedMediaType(
+            HttpMediaTypeNotSupportedException e, HttpServletRequest request) {
+        return buildProblemDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type",
+                "Unsupported Content-Type header. Use application/json.",
+                "https://epams.internal/errors/unsupported-media-type", request, null);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingParam(
+            MissingServletRequestParameterException e, HttpServletRequest request) {
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Bad Request",
+                "Required query parameter '" + e.getParameterName() + "' is missing.",
+                "https://epams.internal/errors/missing-parameter", request, null);
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidSortProperty(
+            PropertyReferenceException e, HttpServletRequest request) {
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Bad Request",
+                "Invalid sort property requested.",
+                "https://epams.internal/errors/invalid-sort-property", request, null);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(
+            NoResourceFoundException e, HttpServletRequest request) {
+        return buildProblemDetail(HttpStatus.NOT_FOUND, "Not Found",
+                "The requested resource was not found.",
+                "https://epams.internal/errors/not-found", request, null);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
             IllegalArgumentException e, HttpServletRequest request) {
@@ -151,10 +191,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleException(
             Exception e, HttpServletRequest request) {
-        String msg = e.getMessage() != null && !e.getMessage().contains("Exception")
-                ? e.getMessage()
-                : "An unexpected error occurred.";
-        return buildProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", msg,
+        log.error("Unhandled internal error on {} {}",
+                request != null ? request.getMethod() : "UNKNOWN",
+                request != null ? request.getRequestURI() : "UNKNOWN", e);
+        return buildProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "An unexpected internal error occurred.",
                 "https://epams.internal/errors/internal-error", request, null);
     }
 

@@ -101,8 +101,41 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 34px;
+  min-height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--ep-radius-sm);
   text-decoration: none;
   color: var(--ep-text-primary);
+}
+
+.ep-brand:focus-visible,
+.ep-search-trigger:focus-visible,
+.ep-profile-trigger:focus-visible,
+.ep-icon-btn:focus-visible {
+  outline: 2px solid var(--ep-brand-primary, #4f46e5);
+  outline-offset: 2px;
+}
+
+.ep-profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
+  padding: 4px 10px 4px 5px;
+  border-radius: var(--ep-radius-full);
+  border: 1px solid var(--ep-border);
+  background: var(--ep-bg-surface);
+  color: var(--ep-text-primary);
+  cursor: pointer;
+  transition: background-color var(--ep-duration-fast) var(--ep-ease), border-color var(--ep-duration-fast) var(--ep-ease);
+}
+
+.ep-profile-trigger:hover {
+  background: var(--ep-hover);
+  border-color: var(--ep-border-strong);
 }
 
 .ep-brand-mark {
@@ -140,6 +173,8 @@ a {
   gap: 8px;
   padding: 7px 12px;
   min-width: 220px;
+  min-height: 36px;
+  flex-shrink: 0;
   background: var(--ep-bg-subtle);
   border: 1px solid var(--ep-border);
   border-radius: var(--ep-radius-sm);
@@ -392,6 +427,9 @@ a {
   justify-content: center;
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
   border-radius: var(--ep-radius-sm);
   border: 1px solid var(--ep-border);
   background: var(--ep-bg-surface);
@@ -895,8 +933,13 @@ a {
   }
 
   .ep-search-trigger {
-    min-width: auto;
-    padding: 7px 9px;
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    flex-shrink: 0;
+    padding: 0;
+    justify-content: center;
   }
 
   .ep-search-trigger-text,
@@ -914,6 +957,27 @@ a {
 }
 
 @media (max-width: 420px) {
+  .ep-topbar {
+    padding: 0 8px;
+    gap: 6px;
+  }
+
+  .ep-topbar-left,
+  .ep-topbar-right {
+    gap: 6px;
+  }
+
+  .ep-brand-title {
+    display: none;
+  }
+
+  .ep-profile-trigger {
+    padding: 3px;
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+  }
+
   .ep-user-meta-hide-xs {
     display: none;
   }

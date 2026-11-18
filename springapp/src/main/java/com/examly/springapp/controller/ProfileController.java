@@ -15,12 +15,21 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/profiles")
 public class ProfileController {
+
+    private static final Set<String> PUBLIC_DIRECTORY_SORT_FIELDS = Set.of(
+            "id", "firstName", "lastName", "department", "designation", "employeeId", "dateOfJoining"
+    );
+    private static final Set<String> PRIVILEGED_DIRECTORY_SORT_FIELDS = Set.of(
+            "id", "firstName", "lastName", "department", "designation", "employeeId", "dateOfJoining", "salary"
+    );
     
     private final ProfileService profileService;
 
@@ -89,6 +98,16 @@ public class ProfileController {
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String department
     ) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean privileged = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equalsIgnoreCase(a.getAuthority())
+                        || "ROLE_HR_MANAGER".equalsIgnoreCase(a.getAuthority()));
+
+        Set<String> allowedSortFields = privileged ? PRIVILEGED_DIRECTORY_SORT_FIELDS : PUBLIC_DIRECTORY_SORT_FIELDS;
+        if (sortBy == null || !allowedSortFields.contains(sortBy)) {
+            throw new IllegalArgumentException("Invalid or unauthorized sort field: " + sortBy);
+        }
+
         int boundedPage = Math.max(page, 0);
         int boundedSize = Math.min(Math.max(size, 1), 100);
         Sort sort = "asc".equalsIgnoreCase(direction) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
@@ -96,10 +115,6 @@ public class ProfileController {
         Page<EmployeeResponseDTO> results = profileService.searchEmployees(query, department, pageable);
 
         // Redact sensitive HR/PII fields for non-Admin/HR_MANAGER directory viewers
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean privileged = auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_ADMIN".equalsIgnoreCase(a.getAuthority())
-                        || "ROLE_HR_MANAGER".equalsIgnoreCase(a.getAuthority()));
         if (!privileged) {
             results.forEach(dto -> {
                 dto.setSalary(null);
@@ -137,7 +152,7 @@ public class ProfileController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'HR_MANAGER')")
     @PostMapping("/employee")
-    public ResponseEntity<EmployeeResponseDTO> saveEmployee(@RequestBody EmployeeRequestDTO request) {
+    public ResponseEntity<EmployeeResponseDTO> saveEmployee(@Valid @RequestBody EmployeeRequestDTO request) {
         String actor = SecurityContextHolder.getContext().getAuthentication().getName();
         EmployeeResponseDTO saved = profileService.saveOrUpdateEmployee(request, actor);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
@@ -145,7 +160,7 @@ public class ProfileController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'HR_MANAGER')")
     @PutMapping("/employee")
-    public ResponseEntity<EmployeeResponseDTO> updateEmployee(@RequestBody EmployeeRequestDTO request) {
+    public ResponseEntity<EmployeeResponseDTO> updateEmployee(@Valid @RequestBody EmployeeRequestDTO request) {
         String actor = SecurityContextHolder.getContext().getAuthentication().getName();
         EmployeeResponseDTO updated = profileService.saveOrUpdateEmployee(request, actor);
         return ResponseEntity.ok(updated);

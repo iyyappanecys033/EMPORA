@@ -1,26 +1,62 @@
 package com.examly.springapp.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public class EmployeeRequestDTO {
+    @Size(max = 50, message = "Employee ID must not exceed 50 characters")
     private String employeeId;
+
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 100, message = "Username must be between 3 and 100 characters")
     private String username;
+
+    @Size(max = 128, message = "Password must not exceed 128 characters")
     private String password;
+
+    @Email(message = "Email must be a valid email address")
+    @Size(max = 100, message = "Email must not exceed 100 characters")
     private String email;
+
+    @Size(max = 30, message = "Phone must not exceed 30 characters")
     private String phone;
+
+    @Size(max = 50, message = "Role must not exceed 50 characters")
     private String role; // ADMIN, HR_MANAGER, EMPLOYEE
+
+    @Size(max = 30, message = "Status must not exceed 30 characters")
     private String status; // ACTIVE, SUSPENDED, DISABLED
 
+    @Size(max = 100, message = "First name must not exceed 100 characters")
     private String firstName;
+
+    @Size(max = 100, message = "Last name must not exceed 100 characters")
     private String lastName;
+
+    @Size(max = 100, message = "Department must not exceed 100 characters")
     private String department;
+
+    @Size(max = 100, message = "Designation must not exceed 100 characters")
     private String designation;
+
+    @PositiveOrZero(message = "Salary must be zero or positive")
     private Double salary;
     private LocalDate dateOfJoining;
+
+    @Size(max = 100, message = "Reporting manager must not exceed 100 characters")
     private String reportingManager;
+
+    @Size(max = 100, message = "Emergency contact must not exceed 100 characters")
     private String emergencyContact;
+
+    @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
     private LocalDate dob;
+
+    @Size(max = 30, message = "Gender must not exceed 30 characters")
     private String gender;
 
     public EmployeeRequestDTO() {}

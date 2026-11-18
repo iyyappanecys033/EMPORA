@@ -18,16 +18,23 @@ const LoginModal = ({ isOpen, onClose }) => {
     if (!isOpen) return undefined;
     previousFocusRef.current = document.activeElement;
     setErrorObj(null);
-    setTimeout(() => userInputRef.current?.focus(), 20);
+    const focusTimer = setTimeout(() => userInputRef.current?.focus(), 20);
+    return () => {
+      clearTimeout(focusTimer);
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
     const onKey = (e) => {
       if (e.key === 'Escape' && !submitting) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
-      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
-        previousFocusRef.current.focus();
-      }
     };
   }, [isOpen, submitting, onClose]);
 

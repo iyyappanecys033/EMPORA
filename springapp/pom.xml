@@ -195,7 +195,7 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <useModulePath>false</useModulePath>
-                    <argLine>${jacoco.argLine} -XX:+DisableAttachMechanism</argLine>
+                    <argLine>@{jacoco.argLine} -XX:+DisableAttachMechanism</argLine>
                 </configuration>
             </plugin>
         </plugins>
@@ -210,7 +210,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.13</version>
+                        <version>0.8.14</version>
                         <executions>
                             <execution>
                                 <id>prepare-agent</id>

@@ -70,7 +70,7 @@ const Navbar = ({ onOpenLogin, onToggleMobileMenu, onOpenSearch, mobileMenuOpen 
           <MenuIcon size={18} />
         </button>
 
-        <Link to="/" className="ep-brand">
+        <Link to="/" className="ep-brand" aria-label="EPAMS Enterprise Workspace Home">
           <span className="ep-brand-mark" aria-hidden="true">E</span>
           <span>
             <span className="ep-brand-title">EPAMS</span>
@@ -84,7 +84,6 @@ const Navbar = ({ onOpenLogin, onToggleMobileMenu, onOpenSearch, mobileMenuOpen 
             className="ep-search-trigger"
             onClick={onOpenSearch}
             aria-label="Quick search workspace (Ctrl+K)"
-            style={{ marginLeft: '10px' }}
           >
             <SearchIcon size={15} />
             <span className="ep-search-trigger-text">Quick search...</span>
@@ -117,20 +116,13 @@ const Navbar = ({ onOpenLogin, onToggleMobileMenu, onOpenSearch, mobileMenuOpen 
             <div ref={menuRef} style={{ position: 'relative' }}>
               <button
                 type="button"
+                className="ep-profile-trigger"
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
                 aria-haspopup="menu"
                 aria-expanded={profileMenuOpen}
                 aria-label="Account and profile menu"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '4px 10px 4px 5px',
-                  borderRadius: 'var(--ep-radius-full)',
-                  border: '1px solid var(--ep-border)',
-                  background: profileMenuOpen ? 'var(--ep-hover)' : 'var(--ep-bg-surface)',
-                  color: 'var(--ep-text-primary)',
-                  cursor: 'pointer'
+                  background: profileMenuOpen ? 'var(--ep-hover)' : 'var(--ep-bg-surface)'
                 }}
               >
                 <Avatar name={displayName} size={30} />
