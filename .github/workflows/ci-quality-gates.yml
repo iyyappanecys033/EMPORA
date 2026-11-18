@@ -1,0 +1,218 @@
+name: EPAMS CI Quality Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-unit-integration-jacoco:
+    name: Backend Compile, Tests & JaCoCo Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Run Backend Tests & JaCoCo Coverage Report
+        working-directory: springapp
+        run: mvn test -B -Dskip.npm=true -Pcoverage
+
+      - name: Upload JaCoCo Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-coverage-report
+          path: springapp/target/site/jacoco/
+
+  frontend-test-build-audit:
+    name: Frontend Jest, Production Build & Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: springapp/springbackend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: springapp/springbackend
+        run: npm ci
+
+      - name: Run Frontend Jest Suite with Coverage
+        working-directory: springapp/springbackend
+        env:
+          CI: 'true'
+        run: npm test -- --watchAll=false --coverage --coverageReporters=text-summary --coverageReporters=lcov
+
+      - name: Build React Production Bundle
+        working-directory: springapp/springbackend
+        env:
+          CI: 'true'
+        run: npm run build
+
+      - name: Run npm Dependency Audit (Report Mode)
+        working-directory: springapp/springbackend
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: Upload Frontend Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-jest-coverage
+          path: springapp/springbackend/coverage/
+
+  mysql8-integration-gate:
+    name: Real MySQL 8 Integration & Migration Gate
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'epams_ci_ephemeral_root' }}
+          MYSQL_DATABASE: epams_ci_test
+          MYSQL_USER: epams_ci
+          MYSQL_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'epams_ci_ephemeral_pass' }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Provision Least-Privilege MySQL 8 Databases & Accounts
+        env:
+          MYSQL_PWD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'epams_ci_ephemeral_root' }}
+          MIG_PASS: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'epams_ci_migrator_pass' }}
+          APP_PASS: ${{ secrets.CI_MYSQL_PASSWORD || 'epams_ci_ephemeral_pass' }}
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root <<SQL
+          CREATE DATABASE IF NOT EXISTS epams_ci_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE DATABASE IF NOT EXISTS epams_stage2_brownfield CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'epams_migrator'@'127.0.0.1' IDENTIFIED BY '${MIG_PASS}';
+          CREATE USER IF NOT EXISTS 'epams_app'@'127.0.0.1' IDENTIFIED BY '${APP_PASS}';
+          GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, REFERENCES, INDEX, ALTER ON epams_ci_test.* TO 'epams_migrator'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, REFERENCES, INDEX, ALTER ON epams_stage2_brownfield.* TO 'epams_migrator'@'127.0.0.1';
+          FLUSH PRIVILEGES;
+          SQL
+
+      - name: Apply Flyway V1-V4 via Migrator Account & Grant Least-Privilege App Role
+        working-directory: springapp
+        env:
+          DB_HOST: '127.0.0.1'
+          DB_PORT: '3306'
+          DB_NAME: epams_ci_test
+          DB_USERNAME: epams_migrator
+          DB_PASSWORD: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'epams_ci_migrator_pass' }}
+          JWT_SECRET: ${{ secrets.CI_JWT_SECRET || 'RXBhbXNDSS1FcGhlbWVyYWwtSldULVNlY3JldC0yNTZCaXRLZXktMjAyNg==' }}
+          COOKIE_SECURE: 'false'
+          MYSQL_PWD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'epams_ci_ephemeral_root' }}
+        run: |
+          mvn package -B -DskipTests -Dskip.npm=true
+          java -jar target/springapp-0.0.1-SNAPSHOT.jar --spring.profiles.active=mysql --server.port=18099 &
+          BOOT_PID=$!
+          for i in $(seq 1 40); do
+            curl -sf http://127.0.0.1:18099/api/v1/health && break
+            sleep 2
+          done
+          kill $BOOT_PID || true
+          mysql -h 127.0.0.1 -P 3306 -u root <<'SQL'
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.user_account TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.role TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.user_role_mapping TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.profile TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.refresh_token TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.account_status_log TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.service_catalog TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.service_ticket TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.ticket_comment TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.approval_task TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.in_app_alert TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT ON epams_ci_test.audit_log TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, UPDATE ON epams_ci_test.audit_chain_head TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT ON epams_ci_test.flyway_schema_history TO 'epams_app'@'127.0.0.1';
+          FLUSH PRIVILEGES;
+          SQL
+
+      - name: Run Real MySQL 8 Integration Suite (Least-Privilege epams_app)
+        working-directory: springapp
+        env:
+          EPAMS_MYSQL_INTEGRATION: 'true'
+          DB_HOST: '127.0.0.1'
+          DB_PORT: '3306'
+          DB_NAME: epams_ci_test
+          DB_USERNAME: epams_app
+          DB_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'epams_ci_ephemeral_pass' }}
+          EPAMS_BROWNFIELD_DB: epams_stage2_brownfield
+          EPAMS_MIGRATOR_USERNAME: epams_migrator
+          EPAMS_MIGRATOR_PASSWORD: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'epams_ci_migrator_pass' }}
+          JWT_SECRET: ${{ secrets.CI_JWT_SECRET || 'RXBhbXNDSS1FcGhlbWVyYWwtSldULVNlY3JldC0yNTZCaXRLZXktMjAyNg==' }}
+          COOKIE_SECURE: 'false'
+        run: mvn test -B -Dskip.npm=true -Dtest=Stage2RealMysqlIntegrationTests
+
+  playwright-e2e-accessibility-gate:
+    name: Playwright E2E & Accessibility Gate
+    runs-on: ubuntu-latest
+    needs: [backend-unit-integration-jacoco, frontend-test-build-audit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: springapp/springbackend/package-lock.json
+
+      - name: Build Packaged EPAMS JAR
+        working-directory: springapp
+        run: mvn package -B -DskipTests
+
+      - name: Install Playwright Chromium & Run E2E
+        working-directory: springapp/springbackend
+        run: |
+          npm ci
+          npx --yes @playwright/test install --with-deps chromium
+          java -jar ../target/springapp-0.0.1-SNAPSHOT.jar \
+            --server.port=8080 \
+            "--spring.datasource.url=jdbc:h2:mem:epams_ci_e2e;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1" \
+            --spring.jpa.hibernate.ddl-auto=validate &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8080/api/v1/health && break
+            sleep 2
+          done
+          EPAMS_BASE_URL=http://127.0.0.1:8080 npx --yes @playwright/test test || STATUS=$?
+          kill $SERVER_PID || true
+          exit ${STATUS:-0}
