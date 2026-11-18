@@ -1,31 +1,30 @@
 import React from 'react';
 
-// Status color palette conforming to 11-State Machine
-const STATUS_COLORS = {
-  DRAFT: { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' },
-  SUBMITTED: { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' },
-  PENDING_APPROVAL: { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
-  PENDING_SECONDARY_APPROVAL: { bg: '#ffedd5', text: '#c2410c', border: '#fed7aa' },
-  ASSIGNED: { bg: '#ede9fe', text: '#6d28d9', border: '#ddd6fe' },
-  IN_PROGRESS: { bg: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe' },
-  ON_HOLD: { bg: '#fef9c3', text: '#a16207', border: '#fef08a' },
-  RESOLVED: { bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' },
-  CLOSED: { bg: '#f3f4f6', text: '#374151', border: '#e5e7eb' },
-  REJECTED: { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
-  CANCELLED: { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' }
+const STATUS_TOKEN_MAP = {
+  DRAFT: { bg: 'var(--ep-st-draft-bg)', fg: 'var(--ep-st-draft-fg)', bd: 'var(--ep-st-draft-bd)' },
+  SUBMITTED: { bg: 'var(--ep-st-submitted-bg)', fg: 'var(--ep-st-submitted-fg)', bd: 'var(--ep-st-submitted-bd)' },
+  PENDING_APPROVAL: { bg: 'var(--ep-st-pending-bg)', fg: 'var(--ep-st-pending-fg)', bd: 'var(--ep-st-pending-bd)' },
+  PENDING_SECONDARY_APPROVAL: { bg: 'var(--ep-st-pending2-bg)', fg: 'var(--ep-st-pending2-fg)', bd: 'var(--ep-st-pending2-bd)' },
+  ASSIGNED: { bg: 'var(--ep-st-assigned-bg)', fg: 'var(--ep-st-assigned-fg)', bd: 'var(--ep-st-assigned-bd)' },
+  IN_PROGRESS: { bg: 'var(--ep-st-progress-bg)', fg: 'var(--ep-st-progress-fg)', bd: 'var(--ep-st-progress-bd)' },
+  ON_HOLD: { bg: 'var(--ep-st-hold-bg)', fg: 'var(--ep-st-hold-fg)', bd: 'var(--ep-st-hold-bd)' },
+  RESOLVED: { bg: 'var(--ep-st-resolved-bg)', fg: 'var(--ep-st-resolved-fg)', bd: 'var(--ep-st-resolved-bd)' },
+  CLOSED: { bg: 'var(--ep-st-closed-bg)', fg: 'var(--ep-st-closed-fg)', bd: 'var(--ep-st-closed-bd)' },
+  REJECTED: { bg: 'var(--ep-st-rejected-bg)', fg: 'var(--ep-st-rejected-fg)', bd: 'var(--ep-st-rejected-bd)' },
+  CANCELLED: { bg: 'var(--ep-st-cancelled-bg)', fg: 'var(--ep-st-cancelled-fg)', bd: 'var(--ep-st-cancelled-bd)' }
 };
 
-const PRIORITY_COLORS = {
-  LOW: { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
-  MEDIUM: { bg: '#eff6ff', text: '#1e40af', border: '#bfdbfe' },
-  HIGH: { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
-  URGENT: { bg: '#fff1f2', text: '#be123c', border: '#fecdd3' },
-  CRITICAL: { bg: '#fef2f2', text: '#991b1b', border: '#fecaca' }
+const PRIORITY_TOKEN_MAP = {
+  LOW: { bg: 'var(--ep-pr-low-bg)', fg: 'var(--ep-pr-low-fg)', bd: 'var(--ep-pr-low-bd)' },
+  MEDIUM: { bg: 'var(--ep-pr-medium-bg)', fg: 'var(--ep-pr-medium-fg)', bd: 'var(--ep-pr-medium-bd)' },
+  HIGH: { bg: 'var(--ep-pr-high-bg)', fg: 'var(--ep-pr-high-fg)', bd: 'var(--ep-pr-high-bd)' },
+  URGENT: { bg: 'var(--ep-pr-urgent-bg)', fg: 'var(--ep-pr-urgent-fg)', bd: 'var(--ep-pr-urgent-bd)' },
+  CRITICAL: { bg: 'var(--ep-pr-critical-bg)', fg: 'var(--ep-pr-critical-fg)', bd: 'var(--ep-pr-critical-bd)' }
 };
 
 export const StatusBadge = ({ status }) => {
   const norm = (status || '').toUpperCase();
-  const theme = STATUS_COLORS[norm] || { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' };
+  const t = STATUS_TOKEN_MAP[norm] || STATUS_TOKEN_MAP.DRAFT;
 
   return (
     <span
@@ -34,22 +33,23 @@ export const StatusBadge = ({ status }) => {
         alignItems: 'center',
         padding: '3px 10px',
         borderRadius: '9999px',
-        fontSize: '12px',
-        fontWeight: 600,
-        backgroundColor: theme.bg,
-        color: theme.text,
-        border: `1px solid ${theme.border}`,
+        fontSize: '11px',
+        fontWeight: 700,
+        backgroundColor: t.bg,
+        color: t.fg,
+        border: `1px solid ${t.bd}`,
         textTransform: 'uppercase',
         letterSpacing: '0.03em',
         whiteSpace: 'nowrap'
       }}
     >
       <span
+        aria-hidden="true"
         style={{
           width: '6px',
           height: '6px',
           borderRadius: '50%',
-          backgroundColor: theme.text,
+          backgroundColor: t.fg,
           marginRight: '6px'
         }}
       />
@@ -60,21 +60,22 @@ export const StatusBadge = ({ status }) => {
 
 export const PriorityBadge = ({ priority }) => {
   const norm = (priority || '').toUpperCase();
-  const theme = PRIORITY_COLORS[norm] || { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' };
+  const t = PRIORITY_TOKEN_MAP[norm] || PRIORITY_TOKEN_MAP.MEDIUM;
 
   return (
     <span
       style={{
         display: 'inline-block',
         padding: '2px 8px',
-        borderRadius: '4px',
+        borderRadius: '5px',
         fontSize: '11px',
         fontWeight: 700,
-        backgroundColor: theme.bg,
-        color: theme.text,
-        border: `1px solid ${theme.border}`,
+        backgroundColor: t.bg,
+        color: t.fg,
+        border: `1px solid ${t.bd}`,
         textTransform: 'uppercase',
-        letterSpacing: '0.04em'
+        letterSpacing: '0.04em',
+        whiteSpace: 'nowrap'
       }}
     >
       {norm}
@@ -83,4 +84,3 @@ export const PriorityBadge = ({ priority }) => {
 };
 
 export default StatusBadge;
-

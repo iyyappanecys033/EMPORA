@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../services/AuthContext';
 import notificationService from '../../services/notificationService';
+import { BellIcon } from '../common/Icons';
 
 const POLL_INTERVAL_MS = 30000;
 
@@ -27,7 +28,7 @@ const NotificationBell = () => {
       const data = await notificationService.getUnreadCount();
       setUnreadCount(typeof data?.unreadCount === 'number' ? data.unreadCount : 0);
     } catch {
-      // Silently ignore background poll failures; manual open displays detailed error
+      // Silently ignore background poll failures
     } finally {
       isPollingRef.current = false;
     }
@@ -74,15 +75,21 @@ const NotificationBell = () => {
   }, [isAuthenticated, fetchUnreadCount]);
 
   useEffect(() => {
+    if (!open) return undefined;
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
       }
     };
-    if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, [open]);
 
   if (!isAuthenticated) return null;
@@ -130,36 +137,29 @@ const NotificationBell = () => {
       <button
         type="button"
         onClick={handleToggle}
+        className="ep-icon-btn"
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         aria-expanded={open}
         style={{
-          position: 'relative',
-          backgroundColor: open ? '#334155' : 'transparent',
-          border: '1px solid #475569',
-          color: '#f8fafc',
-          borderRadius: '6px',
-          padding: '6px 10px',
-          cursor: 'pointer',
-          fontSize: '15px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px'
+          backgroundColor: open ? 'var(--ep-selected)' : 'var(--ep-bg-surface)',
+          color: open ? 'var(--ep-selected-text)' : 'var(--ep-text-secondary)'
         }}
       >
-        <span aria-hidden="true">🔔</span>
+        <BellIcon size={17} />
         {unreadCount > 0 && (
           <span
             data-testid="unread-badge"
+            className="ep-tabular"
             style={{
               position: 'absolute',
-              top: '-6px',
-              right: '-6px',
-              backgroundColor: '#ef4444',
-              color: '#fff',
+              top: '-5px',
+              right: '-5px',
+              backgroundColor: 'var(--ep-danger)',
+              color: '#ffffff',
               borderRadius: '9999px',
               fontSize: '10px',
               fontWeight: 700,
-              padding: '1px 6px',
+              padding: '1px 5px',
               minWidth: '18px',
               textAlign: 'center',
               lineHeight: '14px'
@@ -174,46 +174,28 @@ const NotificationBell = () => {
         <div
           role="dialog"
           aria-label="Recent notifications"
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: '42px',
-            width: '360px',
-            maxWidth: '92vw',
-            backgroundColor: '#ffffff',
-            color: '#0f172a',
-            borderRadius: '10px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 10px 25px rgba(15, 23, 42, 0.2)',
-            zIndex: 200,
-            overflow: 'hidden'
-          }}
+          className="ep-dropdown"
+          style={{ width: '360px', maxWidth: '92vw' }}
         >
           <div
             style={{
               padding: '12px 16px',
-              borderBottom: '1px solid #e2e8f0',
+              borderBottom: '1px solid var(--ep-border)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              backgroundColor: '#f8fafc'
+              backgroundColor: 'var(--ep-bg-subtle)'
             }}
           >
-            <strong style={{ fontSize: '13px', color: '#0f172a' }}>
+            <strong style={{ fontSize: '13px', color: 'var(--ep-text-primary)' }}>
               Notifications ({unreadCount} unread)
             </strong>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 type="button"
                 onClick={fetchRecentNotifications}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#475569',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
+                className="ep-btn ep-btn--ghost ep-btn--sm"
+                style={{ padding: '2px 6px', minHeight: '24px' }}
               >
                 Refresh
               </button>
@@ -221,14 +203,8 @@ const NotificationBell = () => {
                 <button
                   type="button"
                   onClick={handleMarkAllRead}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#2563eb',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
+                  className="ep-btn ep-btn--ghost ep-btn--sm"
+                  style={{ padding: '2px 6px', minHeight: '24px', color: 'var(--ep-primary)' }}
                 >
                   Mark all read
                 </button>
@@ -238,15 +214,15 @@ const NotificationBell = () => {
 
           <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
             {loading ? (
-              <div style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: 'var(--ep-text-muted)' }}>
                 Loading notifications...
               </div>
             ) : error ? (
-              <div style={{ padding: '16px', fontSize: '12px', color: '#b91c1c', backgroundColor: '#fef2f2' }}>
+              <div style={{ padding: '14px 16px', fontSize: '12px', color: 'var(--ep-danger-text)', backgroundColor: 'var(--ep-danger-bg)' }}>
                 {error}
               </div>
             ) : items.length === 0 ? (
-              <div style={{ padding: '28px 16px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>
+              <div style={{ padding: '28px 16px', textAlign: 'center', fontSize: '13px', color: 'var(--ep-text-muted)' }}>
                 You are all caught up! No notifications yet.
               </div>
             ) : (
@@ -260,34 +236,36 @@ const NotificationBell = () => {
                     textAlign: 'left',
                     padding: '12px 16px',
                     border: 'none',
-                    borderBottom: '1px solid #f1f5f9',
-                    backgroundColor: n.isRead ? '#ffffff' : '#eff6ff',
+                    borderBottom: '1px solid var(--ep-border-subtle)',
+                    backgroundColor: n.isRead ? 'var(--ep-bg-elevated)' : 'var(--ep-primary-subtle)',
+                    color: 'var(--ep-text-primary)',
                     cursor: 'pointer',
                     display: 'block'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: n.isRead ? 600 : 700, color: '#0f172a' }}>
+                    <span style={{ fontSize: '12px', fontWeight: n.isRead ? 600 : 700, color: 'var(--ep-text-primary)' }}>
                       {n.title}
                     </span>
                     {!n.isRead && (
                       <span
+                        aria-hidden="true"
                         style={{
                           width: '8px',
                           height: '8px',
                           borderRadius: '50%',
-                          backgroundColor: '#2563eb',
+                          backgroundColor: 'var(--ep-primary)',
                           flexShrink: 0
                         }}
                       />
                     )}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '12px', color: 'var(--ep-text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
                     {n.message}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--ep-text-muted)', marginTop: '6px', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                     <span>{n.eventType?.replace(/_/g, ' ')}</span>
-                    <span>{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</span>
+                    <span className="ep-tabular">{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</span>
                   </div>
                 </button>
               ))
@@ -297,9 +275,9 @@ const NotificationBell = () => {
           <div
             style={{
               padding: '10px 16px',
-              borderTop: '1px solid #e2e8f0',
+              borderTop: '1px solid var(--ep-border)',
               textAlign: 'center',
-              backgroundColor: '#f8fafc'
+              backgroundColor: 'var(--ep-bg-subtle)'
             }}
           >
             <button
@@ -308,14 +286,8 @@ const NotificationBell = () => {
                 setOpen(false);
                 navigate('/notifications');
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#2563eb',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
+              className="ep-btn ep-btn--ghost ep-btn--sm"
+              style={{ color: 'var(--ep-primary)' }}
             >
               View All Notifications &rarr;
             </button>
@@ -327,4 +299,3 @@ const NotificationBell = () => {
 };
 
 export default NotificationBell;
-

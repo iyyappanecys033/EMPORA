@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ticketService from '../../services/ticketService';
 import { useAuth } from '../../services/AuthContext';
 import Alert from '../common/Alert';
+import Avatar from '../common/Avatar';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { LockIcon } from '../common/Icons';
 
 const TicketComments = ({ ticketId }) => {
   const { isResolver, isAdmin } = useAuth();
@@ -49,32 +51,19 @@ const TicketComments = ({ ticketId }) => {
   const canPostInternal = isResolver || isAdmin;
 
   return (
-    <div style={{ marginTop: '32px' }}>
-      <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '16px' }}>
-        Activity & Discussion ({comments.length})
-      </h3>
+    <section style={{ marginTop: '28px' }} aria-labelledby="ticket-discussion-heading">
+      <h2 id="ticket-discussion-heading" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ep-text-primary)', marginBottom: '14px' }}>
+        Activity &amp; Discussion ({comments.length})
+      </h2>
 
       {alert && (
-        <Alert
-          type="error"
-          title={alert.title}
-          detail={alert.detail}
-          onClose={() => setAlert(null)}
-        />
+        <Alert type="error" title={alert.title} detail={alert.detail} onClose={() => setAlert(null)} />
       )}
 
-      {/* Comment Input Form */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0',
-          padding: '16px',
-          marginBottom: '20px'
-        }}
-      >
+      <form onSubmit={handleSubmit} className="ep-card" style={{ marginBottom: '18px' }}>
+        <label htmlFor="ticket-comment-input" className="sr-only">Add comment</label>
         <textarea
+          id="ticket-comment-input"
           rows={3}
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
@@ -82,108 +71,94 @@ const TicketComments = ({ ticketId }) => {
           required
           maxLength={4000}
           disabled={submitting}
-          style={{
-            width: '100%',
-            padding: '10px 12px',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e1',
-            fontSize: '13px',
-            fontFamily: 'inherit',
-            resize: 'vertical',
-            boxSizing: 'border-box'
-          }}
+          className="ep-textarea"
         />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '12px' }}>
           {canPostInternal ? (
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#475569', cursor: 'pointer' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--ep-text-secondary)', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={isInternal}
                 onChange={(e) => setIsInternal(e.target.checked)}
               />
-              <span style={{ fontWeight: 500 }}>
-                🔒 Internal Specialist Note <span style={{ color: '#94a3b8', fontSize: '11px' }}>(Hidden from employee)</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
+                <LockIcon size={14} /> Internal Specialist Note{' '}
+                <span style={{ color: 'var(--ep-text-muted)', fontSize: '11px', fontWeight: 500 }}>(Hidden from employee)</span>
               </span>
             </label>
           ) : (
             <div />
           )}
 
-          <button
-            type="submit"
-            disabled={submitting || !commentText.trim()}
-            style={{
-              padding: '8px 18px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: submitting || !commentText.trim() ? '#93c5fd' : '#2563eb',
-              color: '#fff',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: submitting || !commentText.trim() ? 'not-allowed' : 'pointer'
-            }}
-          >
+          <button type="submit" disabled={submitting || !commentText.trim()} className="ep-btn ep-btn--primary">
             {submitting ? 'Posting...' : 'Post Comment'}
           </button>
         </div>
       </form>
 
-      {/* Comments List */}
       {loading ? (
         <LoadingSpinner message="Loading discussion..." />
       ) : comments.length === 0 ? (
-        <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', backgroundColor: '#fff', borderRadius: '8px', border: '1px dashed #cbd5e1', fontSize: '13px' }}>
+        <div
+          className="ep-card"
+          style={{ textAlign: 'center', padding: '24px', color: 'var(--ep-text-muted)', borderStyle: 'dashed', fontSize: '13px' }}
+        >
           No comments yet. Start the conversation above.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {comments.map((c) => (
-            <div
+            <article
               key={c.id}
+              className="ep-card"
               style={{
-                backgroundColor: c.isInternal ? '#fffbeb' : '#fff',
-                borderRadius: '8px',
-                border: c.isInternal ? '1px solid #fde68a' : '1px solid #e2e8f0',
+                backgroundColor: c.isInternal ? 'var(--ep-warning-bg)' : 'var(--ep-bg-surface)',
+                borderColor: c.isInternal ? 'var(--ep-warning-border)' : 'var(--ep-border)',
+                borderLeft: c.isInternal ? '4px solid var(--ep-warning)' : undefined,
                 padding: '14px 16px'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Avatar name={c.authorUsername} size={26} />
+                  <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ep-text-primary)' }}>
                     {c.authorUsername}
                   </span>
                   {c.isInternal && (
                     <span
                       style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
                         fontSize: '10px',
-                        padding: '2px 6px',
+                        padding: '2px 7px',
                         borderRadius: '4px',
-                        backgroundColor: '#fef3c7',
-                        color: '#92400e',
+                        backgroundColor: 'var(--ep-bg-surface)',
+                        color: 'var(--ep-warning-text)',
+                        border: '1px solid var(--ep-warning-border)',
                         fontWeight: 700,
                         textTransform: 'uppercase'
                       }}
                     >
-                      🔒 Internal Note
+                      <LockIcon size={11} /> Internal Note
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                <span className="ep-tabular" style={{ fontSize: '12px', color: 'var(--ep-text-muted)' }}>
                   {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
                 </span>
               </div>
 
-              <div style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+              <div style={{ fontSize: '13px', color: 'var(--ep-text-primary)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
                 {c.commentText}
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
 export default TicketComments;
-

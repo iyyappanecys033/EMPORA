@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import notificationService from '../../services/notificationService';
-import LoadingSpinner from '../common/LoadingSpinner';
+import { TableSkeleton } from '../common/LoadingSkeleton';
 import EmptyState from '../common/EmptyState';
 import Pagination from '../common/Pagination';
 import Alert from '../common/Alert';
+import { BellIcon, RefreshIcon } from '../common/Icons';
 
 const EVENT_TYPES = [
   { value: '', label: 'All Event Types' },
@@ -12,11 +13,14 @@ const EVENT_TYPES = [
   { value: 'TICKET_ASSIGNED', label: 'Ticket Assigned' },
   { value: 'STATUS_CHANGED', label: 'Status Changed' },
   { value: 'TICKET_RESOLVED', label: 'Ticket Resolved' },
+  { value: 'TICKET_AUTO_CLOSED', label: 'Ticket Auto-Closed' },
   { value: 'TICKET_REOPENED', label: 'Ticket Reopened' },
   { value: 'TICKET_CANCELLED', label: 'Ticket Cancelled' },
   { value: 'APPROVAL_REQUIRED', label: 'Approval Required' },
   { value: 'TICKET_APPROVED', label: 'Ticket Approved' },
-  { value: 'APPROVAL_REJECTED', label: 'Approval Rejected' }
+  { value: 'APPROVAL_REJECTED', label: 'Approval Rejected' },
+  { value: 'SLA_WARNING', label: 'SLA Warning' },
+  { value: 'SLA_BREACHED', label: 'SLA Breached' }
 ];
 
 const NotificationsPage = () => {
@@ -100,48 +104,19 @@ const NotificationsPage = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="ep-page-header">
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>
-            Notification Center
-          </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-            Real-time workflow alerts for your tickets, approvals, and assignments ({unreadCount} unread).
+          <h1 className="ep-page-title">Notification Center</h1>
+          <p className="ep-page-subtitle">
+            Real-time workflow alerts for your tickets, approvals, and assignments (<strong className="ep-tabular">{unreadCount}</strong> unread).
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={fetchNotifications}
-            style={{
-              padding: '8px 14px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e1',
-              backgroundColor: '#fff',
-              color: '#334155',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            🔄 Refresh
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button type="button" onClick={fetchNotifications} className="ep-btn ep-btn--secondary">
+            <RefreshIcon size={15} /> Refresh
           </button>
-          <button
-            type="button"
-            onClick={handleMarkAllRead}
-            disabled={unreadCount === 0}
-            style={{
-              padding: '8px 14px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: unreadCount === 0 ? '#cbd5e1' : '#2563eb',
-              color: '#fff',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: unreadCount === 0 ? 'not-allowed' : 'pointer'
-            }}
-          >
+          <button type="button" onClick={handleMarkAllRead} disabled={unreadCount === 0} className="ep-btn ep-btn--primary">
             ✓ Mark All Read
           </button>
         </div>
@@ -157,21 +132,8 @@ const NotificationsPage = () => {
         />
       )}
 
-      {/* Filter Bar */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '12px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          marginBottom: '18px',
-          padding: '12px 16px',
-          backgroundColor: '#fff',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0'
-        }}
-      >
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
+      <div className="ep-filter-bar">
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--ep-text-secondary)', cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={unreadOnly}
@@ -183,38 +145,34 @@ const NotificationsPage = () => {
           <span>Unread only</span>
         </label>
 
-        <select
-          aria-label="Filter by event type"
-          value={eventType}
-          onChange={(e) => {
-            setEventType(e.target.value);
-            setPage(0);
-          }}
-          style={{
-            padding: '7px 12px',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e1',
-            fontSize: '13px',
-            backgroundColor: '#fff'
-          }}
-        >
-          {EVENT_TYPES.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <div style={{ width: '210px' }}>
+          <select
+            aria-label="Filter by event type"
+            value={eventType}
+            onChange={(e) => {
+              setEventType(e.target.value);
+              setPage(0);
+            }}
+            className="ep-select"
+          >
+            {EVENT_TYPES.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#64748b' }}>
+        <span className="ep-tabular" style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--ep-text-muted)' }}>
           Showing {notifications.length} of {totalElements} notifications
         </span>
       </div>
 
       {loading ? (
-        <LoadingSpinner message="Loading your notifications..." />
+        <TableSkeleton rows={4} />
       ) : notifications.length === 0 ? (
         <EmptyState
-          icon="🔔"
+          icon={<BellIcon size={26} />}
           title={unreadOnly ? 'No unread notifications' : 'No notifications found'}
           description={
             unreadOnly
@@ -225,13 +183,13 @@ const NotificationsPage = () => {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {notifications.map((item) => (
-            <div
+            <article
               key={item.id}
+              className="ep-card"
               style={{
-                backgroundColor: item.isRead ? '#ffffff' : '#eff6ff',
-                border: item.isRead ? '1px solid #e2e8f0' : '1px solid #bfdbfe',
-                borderLeft: item.isRead ? '4px solid #cbd5e1' : '4px solid #2563eb',
-                borderRadius: '8px',
+                backgroundColor: item.isRead ? 'var(--ep-bg-surface)' : 'var(--ep-primary-subtle)',
+                borderColor: item.isRead ? 'var(--ep-border)' : 'var(--ep-primary-border)',
+                borderLeft: `4px solid ${item.isRead ? 'var(--ep-border-strong)' : 'var(--ep-primary)'}`,
                 padding: '14px 18px',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -240,33 +198,33 @@ const NotificationsPage = () => {
                 flexWrap: 'wrap'
               }}
             >
-              <div style={{ flex: 1, minWidth: '240px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+              <div style={{ flex: 1, minWidth: '230px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '5px' }}>
                   <span
                     style={{
                       fontSize: '10px',
                       fontWeight: 700,
                       padding: '2px 7px',
                       borderRadius: '4px',
-                      backgroundColor: item.isRead ? '#f1f5f9' : '#dbeafe',
-                      color: item.isRead ? '#475569' : '#1d4ed8',
+                      backgroundColor: item.isRead ? 'var(--ep-bg-muted)' : 'var(--ep-bg-surface)',
+                      color: item.isRead ? 'var(--ep-text-secondary)' : 'var(--ep-selected-text)',
                       textTransform: 'uppercase'
                     }}
                   >
                     {item.eventType?.replace(/_/g, ' ')}
                   </span>
                   {!item.isRead && (
-                    <span style={{ fontSize: '10px', fontWeight: 700, color: '#2563eb' }}>NEW</span>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ep-primary)' }}>NEW</span>
                   )}
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  <span className="ep-tabular" style={{ fontSize: '11px', color: 'var(--ep-text-muted)' }}>
                     {item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}
                   </span>
                 </div>
 
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ep-text-primary)', marginBottom: '4px' }}>
                   {item.title}
                 </div>
-                <div style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '13px', color: 'var(--ep-text-secondary)', lineHeight: 1.5 }}>
                   {item.message}
                 </div>
               </div>
@@ -276,16 +234,7 @@ const NotificationsPage = () => {
                   <button
                     type="button"
                     onClick={() => handleOpenResource(item)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid #2563eb',
-                      backgroundColor: '#fff',
-                      color: '#2563eb',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
+                    className="ep-btn ep-btn--subtle ep-btn--sm"
                   >
                     {item.relatedEntityType === 'APPROVAL' ? 'Open Approvals' : 'View Ticket'}
                   </button>
@@ -294,30 +243,23 @@ const NotificationsPage = () => {
                   <button
                     type="button"
                     onClick={() => handleMarkRead(item.id)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#fff',
-                      color: '#334155',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
+                    className="ep-btn ep-btn--secondary ep-btn--sm"
                   >
                     Mark Read
                   </button>
                 )}
               </div>
-            </div>
+            </article>
           ))}
 
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            onPageChange={setPage}
-          />
+          <div className="ep-table-wrap">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -325,4 +267,3 @@ const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
-

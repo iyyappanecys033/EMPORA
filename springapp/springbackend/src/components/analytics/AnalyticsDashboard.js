@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../services/AuthContext';
 import analyticsService from '../../services/analyticsService';
-import LoadingSpinner from '../common/LoadingSpinner';
+import { DashboardSkeleton } from '../common/LoadingSkeleton';
 import EmptyState from '../common/EmptyState';
 import Alert from '../common/Alert';
+import { ChartIcon, RefreshIcon } from '../common/Icons';
 
 const PRIORITY_BAR_COLORS = {
-  LOW: '#16a34a',
-  MEDIUM: '#2563eb',
-  HIGH: '#ea580c',
+  LOW: 'var(--ep-success)',
+  MEDIUM: 'var(--ep-primary)',
+  HIGH: 'var(--ep-warning)',
   URGENT: '#e11d48',
-  CRITICAL: '#991b1b'
+  CRITICAL: 'var(--ep-danger)'
 };
 
 const formatDateInput = (dateObj) => {
@@ -80,13 +81,9 @@ const AnalyticsDashboard = () => {
   const sla = bundle?.slaCompliance;
   const approvals = bundle?.approvalsOverview;
 
-  const maxTrendVal = Math.max(
-    1,
-    ...trends.map((t) => Math.max(t.submittedCount || 0, t.resolvedCount || 0))
-  );
+  const maxTrendVal = Math.max(1, ...trends.map((t) => Math.max(t.submittedCount || 0, t.resolvedCount || 0)));
   const maxPopVal = Math.max(1, ...popularity.map((p) => p.requestCount || 0));
 
-  // SVG gauge geometry for SLA compliance ring
   const slaPct = sla?.compliancePercentage;
   const ringRadius = 42;
   const ringCircumference = 2 * Math.PI * ringRadius;
@@ -97,75 +94,49 @@ const AnalyticsDashboard = () => {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+      <div className="ep-page-header">
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>
-            Operational Analytics & Service Insights
-          </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+          <h1 className="ep-page-title">Operational Analytics &amp; Service Insights</h1>
+          <p className="ep-page-subtitle">
             Backend-authoritative SLA compliance, backlog metrics, and workload trends
             {overview?.timezone ? ` (${overview.timezone})` : ' (Asia/Kolkata)'}
             {overview?.scopedDepartment ? ` • Scope: ${overview.scopedDepartment}` : ''}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button type="button" onClick={() => applyPreset(6)} style={presetBtnStyle}>7D</button>
-          <button type="button" onClick={() => applyPreset(29)} style={presetBtnStyle}>30D</button>
-          <button type="button" onClick={() => applyPreset(89)} style={presetBtnStyle}>90D</button>
-          <button
-            type="button"
-            onClick={fetchAnalytics}
-            style={{ ...presetBtnStyle, backgroundColor: '#2563eb', color: '#fff', borderColor: '#2563eb' }}
-          >
-            🔄 Refresh
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => applyPreset(6)} className="ep-btn ep-btn--secondary ep-btn--sm">7D</button>
+          <button type="button" onClick={() => applyPreset(29)} className="ep-btn ep-btn--secondary ep-btn--sm">30D</button>
+          <button type="button" onClick={() => applyPreset(89)} className="ep-btn ep-btn--secondary ep-btn--sm">90D</button>
+          <button type="button" onClick={fetchAnalytics} className="ep-btn ep-btn--primary ep-btn--sm">
+            <RefreshIcon size={14} /> Refresh
           </button>
         </div>
       </div>
 
       {/* Filter Controls */}
       <div
+        className="ep-card"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
           gap: '12px',
-          backgroundColor: '#fff',
           padding: '14px 16px',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0',
           marginBottom: '20px'
         }}
       >
         <div>
-          <label htmlFor="analyticsStartDate" style={filterLabelStyle}>Start Date</label>
-          <input
-            id="analyticsStartDate"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={filterInputStyle}
-          />
+          <label htmlFor="analyticsStartDate" className="ep-label">Start Date</label>
+          <input id="analyticsStartDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="ep-input" />
         </div>
         <div>
-          <label htmlFor="analyticsEndDate" style={filterLabelStyle}>End Date</label>
-          <input
-            id="analyticsEndDate"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={filterInputStyle}
-          />
+          <label htmlFor="analyticsEndDate" className="ep-label">End Date</label>
+          <input id="analyticsEndDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="ep-input" />
         </div>
         <div>
-          <label htmlFor="analyticsDepartment" style={filterLabelStyle}>Department Scope</label>
+          <label htmlFor="analyticsDepartment" className="ep-label">Department Scope</label>
           {canSelectAnyDepartment ? (
-            <select
-              id="analyticsDepartment"
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              style={filterInputStyle}
-            >
+            <select id="analyticsDepartment" value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="ep-select">
               <option value="ALL">All Departments</option>
               <option value="IT">IT</option>
               <option value="HR">HR</option>
@@ -174,24 +145,12 @@ const AnalyticsDashboard = () => {
               <option value="Engineering">Engineering</option>
             </select>
           ) : (
-            <input
-              id="analyticsDepartment"
-              type="text"
-              value={userDepartment || 'Assigned Department'}
-              readOnly
-              disabled
-              style={{ ...filterInputStyle, backgroundColor: '#f1f5f9', color: '#475569' }}
-            />
+            <input id="analyticsDepartment" type="text" value={userDepartment || 'Assigned Department'} readOnly disabled className="ep-input" />
           )}
         </div>
         <div>
-          <label htmlFor="analyticsPriority" style={filterLabelStyle}>Priority</label>
-          <select
-            id="analyticsPriority"
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            style={filterInputStyle}
-          >
+          <label htmlFor="analyticsPriority" className="ep-label">Priority</label>
+          <select id="analyticsPriority" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="ep-select">
             <option value="">All Priorities</option>
             <option value="LOW">Low</option>
             <option value="MEDIUM">Medium</option>
@@ -203,138 +162,134 @@ const AnalyticsDashboard = () => {
       </div>
 
       {alert && (
-        <Alert
-          type="error"
-          title={alert.title || 'Analytics Error'}
-          detail={alert.detail}
-          errors={alert.errors}
-          onClose={() => setAlert(null)}
-        />
+        <Alert type="error" title={alert.title || 'Analytics Error'} detail={alert.detail} errors={alert.errors} onClose={() => setAlert(null)} />
       )}
 
       {loading ? (
-        <LoadingSpinner message="Aggregating operational analytics from backend..." />
+        <DashboardSkeleton />
       ) : !overview ? (
         <EmptyState
-          icon="📊"
+          icon={<ChartIcon size={26} />}
           title="No analytics data available"
           description="Adjust your date range or filters to inspect operational metrics."
         />
       ) : (
         <>
           {/* Summary KPI Cards */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))',
-              gap: '14px',
-              marginBottom: '24px'
-            }}
-          >
-            <KpiCard label="Submitted (Period)" value={overview.periodTotalTickets} subtext={`${overview.startDate} to ${overview.endDate}`} color="#0f172a" />
-            <KpiCard label="Open Backlog" value={overview.openTicketsSnapshot} subtext="Current live snapshot" color="#2563eb" />
-            <KpiCard label="Resolved / Closed" value={overview.resolvedTicketsInPeriod} subtext={`${overview.closedTicketsInPeriod} closed in period`} color="#16a34a" />
-            <KpiCard label="Overdue Open" value={overview.overdueOpenTicketsSnapshot} subtext="Active clock past SLA" color={overview.overdueOpenTicketsSnapshot > 0 ? '#dc2626' : '#16a34a'} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: '14px', marginBottom: '22px' }}>
+            <KpiCard label="Submitted (Period)" value={overview.periodTotalTickets} subtext={`${overview.startDate} to ${overview.endDate}`} accent="var(--ep-text-primary)" />
+            <KpiCard label="Open Backlog" value={overview.openTicketsSnapshot} subtext="Current live snapshot" accent="var(--ep-primary)" />
+            <KpiCard label="Resolved / Closed" value={overview.resolvedTicketsInPeriod} subtext={`${overview.closedTicketsInPeriod} closed in period`} accent="var(--ep-success)" />
+            <KpiCard label="Overdue Open" value={overview.overdueOpenTicketsSnapshot} subtext="Active clock past SLA" accent={overview.overdueOpenTicketsSnapshot > 0 ? 'var(--ep-danger)' : 'var(--ep-success)'} />
             <KpiCard
               label="SLA Compliance"
               value={overview.slaComplianceRate !== null && overview.slaComplianceRate !== undefined ? `${overview.slaComplianceRate}%` : 'N/A'}
               subtext={overview.averageResolutionHours !== null && overview.averageResolutionHours !== undefined ? `Avg Res: ${overview.averageResolutionHours}h` : 'No resolved tickets'}
-              color="#0f766e"
+              accent="var(--ep-secondary)"
             />
-            <KpiCard label="Pending Approvals" value={overview.pendingApprovalsSnapshot} subtext={`${approvals?.overduePendingSnapshot || 0} overdue (>24h)`} color="#d97706" />
+            <KpiCard label="Pending Approvals" value={overview.pendingApprovalsSnapshot} subtext={`${approvals?.overduePendingSnapshot || 0} overdue (>24h)`} accent="var(--ep-warning)" />
           </div>
 
           {/* Row 1: Volume Trend + SLA & Approvals */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-            {/* Daily Ticket Volume Trend */}
-            <section style={panelStyle} aria-label="Ticket volume trend chart">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+            <section className="ep-card" aria-label="Ticket volume trend chart">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '8px', flexWrap: 'wrap' }}>
                 <h2 style={panelTitleStyle}>Ticket Volume Trend</h2>
-                <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#475569' }}>
-                  <span><span style={{ display: 'inline-block', width: '10px', height: '10px', backgroundColor: '#2563eb', borderRadius: '2px', marginRight: '4px' }} />Submitted</span>
-                  <span><span style={{ display: 'inline-block', width: '10px', height: '10px', backgroundColor: '#16a34a', borderRadius: '2px', marginRight: '4px' }} />Resolved</span>
+                <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--ep-text-muted)' }}>
+                  <span><span style={{ display: 'inline-block', width: '10px', height: '10px', backgroundColor: 'var(--ep-primary)', borderRadius: '2px', marginRight: '4px' }} />Submitted</span>
+                  <span><span style={{ display: 'inline-block', width: '10px', height: '10px', backgroundColor: 'var(--ep-success)', borderRadius: '2px', marginRight: '4px' }} />Resolved</span>
                 </div>
               </div>
               {trends.length === 0 ? (
                 <div style={emptyPanelStyle}>No trend data for selected window.</div>
               ) : (
-                <div
-                  role="img"
-                  aria-label={`Daily ticket trend across ${trends.length} days`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    gap: '4px',
-                    height: '165px',
-                    paddingTop: '12px',
-                    borderBottom: '1px solid #e2e8f0',
-                    overflowX: 'auto'
-                  }}
-                >
-                  {trends.slice(-31).map((pt) => {
-                    const subH = Math.round(((pt.submittedCount || 0) / maxTrendVal) * 130);
-                    const resH = Math.round(((pt.resolvedCount || 0) / maxTrendVal) * 130);
-                    return (
-                      <div
-                        key={pt.date}
-                        title={`${pt.date}: ${pt.submittedCount} submitted, ${pt.resolvedCount} resolved`}
-                        style={{ flex: '1 0 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '134px' }}>
-                          <div style={{ width: '6px', height: `${Math.max(pt.submittedCount > 0 ? 4 : 0, subH)}px`, backgroundColor: '#2563eb', borderRadius: '2px 2px 0 0' }} />
-                          <div style={{ width: '6px', height: `${Math.max(pt.resolvedCount > 0 ? 4 : 0, resH)}px`, backgroundColor: '#16a34a', borderRadius: '2px 2px 0 0' }} />
-                        </div>
-                        <span style={{ fontSize: '9px', color: '#94a3b8' }}>
-                          {String(pt.date).slice(5)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <figure style={{ margin: 0 }}>
+                  <div
+                    role="img"
+                    tabIndex={0}
+                    aria-label={`Daily ticket volume trend across ${trends.length} days, peak daily volume ${maxTrendVal}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      gap: '4px',
+                      height: '170px',
+                      padding: '12px 12px 4px',
+                      borderBottom: '1px solid var(--ep-border)',
+                      overflowX: 'auto'
+                    }}
+                  >
+                    {(() => {
+                      const sliced = trends.slice(-31);
+                      const showStep = sliced.length > 12 ? 5 : 1;
+                      return sliced.map((pt, idx) => {
+                        const subH = Math.round(((pt.submittedCount || 0) / maxTrendVal) * 126);
+                        const resH = Math.round(((pt.resolvedCount || 0) / maxTrendVal) * 126);
+                        const showLabel = showStep === 1 || idx === 0 || idx === sliced.length - 1 || idx % showStep === 0;
+                        return (
+                          <div
+                            key={pt.date}
+                            title={`${pt.date}: ${pt.submittedCount} submitted, ${pt.resolvedCount} resolved`}
+                            style={{ flex: '1 1 12px', minWidth: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '130px' }}>
+                              <div style={{ width: '5px', height: `${Math.max(pt.submittedCount > 0 ? 4 : 0, subH)}px`, backgroundColor: 'var(--ep-primary)', borderRadius: '2px 2px 0 0' }} />
+                              <div style={{ width: '5px', height: `${Math.max(pt.resolvedCount > 0 ? 4 : 0, resH)}px`, backgroundColor: 'var(--ep-success)', borderRadius: '2px 2px 0 0' }} />
+                            </div>
+                            <span style={{ fontSize: '9px', color: 'var(--ep-text-muted)', whiteSpace: 'nowrap', minHeight: '12px' }}>
+                              {showLabel ? String(pt.date).slice(5) : ''}
+                            </span>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                  <figcaption className="sr-only">
+                    Showing submitted and resolved ticket counts across {trends.length} days from {overview.startDate} to {overview.endDate}.
+                  </figcaption>
+                </figure>
               )}
             </section>
 
-            {/* SLA Compliance Gauge & Approval Pipeline */}
-            <section style={panelStyle} aria-label="SLA compliance and approval overview">
-              <h2 style={{ ...panelTitleStyle, marginBottom: '14px' }}>SLA Performance & Approval Pipeline</h2>
+            <section className="ep-card" aria-label="SLA compliance and approval overview">
+              <h2 style={{ ...panelTitleStyle, marginBottom: '14px' }}>SLA Performance &amp; Approval Pipeline</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
                 <svg width="110" height="110" viewBox="0 0 110 110" role="img" aria-label={`SLA compliance ${slaPct ?? 'not available'} percent`}>
-                  <circle cx="55" cy="55" r={ringRadius} fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                  <circle cx="55" cy="55" r={ringRadius} fill="none" stroke="var(--ep-border)" strokeWidth="10" />
                   <circle
                     cx="55"
                     cy="55"
                     r={ringRadius}
                     fill="none"
-                    stroke={slaPct === null || slaPct === undefined ? '#94a3b8' : slaPct >= 90 ? '#16a34a' : slaPct >= 75 ? '#d97706' : '#dc2626'}
+                    stroke={slaPct === null || slaPct === undefined ? 'var(--ep-text-muted)' : slaPct >= 90 ? 'var(--ep-success)' : slaPct >= 75 ? 'var(--ep-warning)' : 'var(--ep-danger)'}
                     strokeWidth="10"
                     strokeDasharray={ringCircumference}
                     strokeDashoffset={ringOffset}
                     strokeLinecap="round"
                     transform="rotate(-90 55 55)"
                   />
-                  <text x="55" y="59" textAnchor="middle" fontSize="16" fontWeight="700" fill="#0f172a">
+                  <text x="55" y="59" textAnchor="middle" fontSize="16" fontWeight="700" fill="var(--ep-text-primary)">
                     {slaPct !== null && slaPct !== undefined ? `${slaPct}%` : 'N/A'}
                   </text>
                 </svg>
 
-                <div style={{ flex: 1, fontSize: '13px', color: '#334155', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div><span style={{ color: '#64748b', display: 'block', fontSize: '11px' }}>Met SLA</span><strong>{sla?.metSlaCount ?? 0}</strong></div>
-                  <div><span style={{ color: '#64748b', display: 'block', fontSize: '11px' }}>Breached SLA</span><strong style={{ color: '#dc2626' }}>{sla?.breachedSlaCount ?? 0}</strong></div>
-                  <div><span style={{ color: '#64748b', display: 'block', fontSize: '11px' }}>Stage 1 Pending</span><strong>{approvals?.stage1PendingSnapshot ?? 0}</strong></div>
-                  <div><span style={{ color: '#64748b', display: 'block', fontSize: '11px' }}>Stage 2 Pending</span><strong>{approvals?.stage2PendingSnapshot ?? 0}</strong></div>
-                  <div><span style={{ color: '#64748b', display: 'block', fontSize: '11px' }}>Approved (Period)</span><strong style={{ color: '#16a34a' }}>{approvals?.approvedInPeriod ?? 0}</strong></div>
-                  <div><span style={{ color: '#64748b', display: 'block', fontSize: '11px' }}>Rejected (Period)</span><strong style={{ color: '#dc2626' }}>{approvals?.rejectedInPeriod ?? 0}</strong></div>
+                <div style={{ flex: 1, fontSize: '13px', color: 'var(--ep-text-primary)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div><span style={statMetaStyle}>Met SLA</span><strong className="ep-tabular">{sla?.metSlaCount ?? 0}</strong></div>
+                  <div><span style={statMetaStyle}>Breached SLA</span><strong className="ep-tabular" style={{ color: 'var(--ep-danger)' }}>{sla?.breachedSlaCount ?? 0}</strong></div>
+                  <div><span style={statMetaStyle}>Stage 1 Pending</span><strong className="ep-tabular">{approvals?.stage1PendingSnapshot ?? 0}</strong></div>
+                  <div><span style={statMetaStyle}>Stage 2 Pending</span><strong className="ep-tabular">{approvals?.stage2PendingSnapshot ?? 0}</strong></div>
+                  <div><span style={statMetaStyle}>Approved (Period)</span><strong className="ep-tabular" style={{ color: 'var(--ep-success)' }}>{approvals?.approvedInPeriod ?? 0}</strong></div>
+                  <div><span style={statMetaStyle}>Rejected (Period)</span><strong className="ep-tabular" style={{ color: 'var(--ep-danger)' }}>{approvals?.rejectedInPeriod ?? 0}</strong></div>
                 </div>
               </div>
-              <div style={{ marginTop: '12px', fontSize: '11px', color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+              <div style={{ marginTop: '12px', fontSize: '11px', color: 'var(--ep-text-muted)', borderTop: '1px solid var(--ep-border-subtle)', paddingTop: '8px' }}>
                 SLA excludes CANCELLED/REJECTED tickets and subtracts ON_HOLD paused minutes per Asia/Kolkata business calendar.
               </div>
             </section>
           </div>
 
-          {/* Row 2: Status Distribution & Priority Distribution */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-            <section style={panelStyle} aria-label="Ticket status distribution">
+          {/* Row 2: Distributions */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+            <section className="ep-card" aria-label="Ticket status distribution">
               <h2 style={{ ...panelTitleStyle, marginBottom: '12px' }}>Ticket Status Distribution</h2>
               {statusDist.length === 0 ? (
                 <div style={emptyPanelStyle}>No tickets submitted in this period.</div>
@@ -343,11 +298,11 @@ const AnalyticsDashboard = () => {
                   {statusDist.map((item) => (
                     <div key={item.status}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 600, color: '#1e293b' }}>{item.status.replace(/_/g, ' ')}</span>
-                        <span style={{ color: '#475569' }}>{item.count} ({item.percentage}%)</span>
+                        <span style={{ fontWeight: 600, color: 'var(--ep-text-primary)' }}>{item.status.replace(/_/g, ' ')}</span>
+                        <span className="ep-tabular" style={{ color: 'var(--ep-text-muted)' }}>{item.count} ({item.percentage}%)</span>
                       </div>
-                      <div style={{ height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ width: `${item.percentage}%`, height: '100%', backgroundColor: '#2563eb' }} />
+                      <div style={{ height: '8px', backgroundColor: 'var(--ep-bg-muted)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${item.percentage}%`, height: '100%', backgroundColor: 'var(--ep-primary)' }} />
                       </div>
                     </div>
                   ))}
@@ -355,23 +310,17 @@ const AnalyticsDashboard = () => {
               )}
             </section>
 
-            <section style={panelStyle} aria-label="Ticket priority distribution">
+            <section className="ep-card" aria-label="Ticket priority distribution">
               <h2 style={{ ...panelTitleStyle, marginBottom: '12px' }}>Priority Distribution (All 5 Tiers)</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {priorityDist.map((item) => (
                   <div key={item.priority}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: 600, color: '#1e293b' }}>{item.priority}</span>
-                      <span style={{ color: '#475569' }}>{item.count} ({item.percentage}%)</span>
+                      <span style={{ fontWeight: 600, color: 'var(--ep-text-primary)' }}>{item.priority}</span>
+                      <span className="ep-tabular" style={{ color: 'var(--ep-text-muted)' }}>{item.count} ({item.percentage}%)</span>
                     </div>
-                    <div style={{ height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          width: `${item.percentage}%`,
-                          height: '100%',
-                          backgroundColor: PRIORITY_BAR_COLORS[item.priority] || '#475569'
-                        }}
-                      />
+                    <div style={{ height: '8px', backgroundColor: 'var(--ep-bg-muted)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${item.percentage}%`, height: '100%', backgroundColor: PRIORITY_BAR_COLORS[item.priority] || 'var(--ep-primary)' }} />
                     </div>
                   </div>
                 ))}
@@ -379,34 +328,34 @@ const AnalyticsDashboard = () => {
             </section>
           </div>
 
-          {/* Row 3: Department Performance Table & Service Popularity */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
-            <section style={panelStyle} aria-label="Department workload and backlog">
-              <h2 style={{ ...panelTitleStyle, marginBottom: '12px' }}>Department Workload & Backlog</h2>
+          {/* Row 3: Department Workload & Popularity */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '20px' }}>
+            <section className="ep-card" aria-label="Department workload and backlog">
+              <h2 style={{ ...panelTitleStyle, marginBottom: '12px' }}>Department Workload &amp; Backlog</h2>
               {deptPerf.length === 0 ? (
                 <div style={emptyPanelStyle}>No department activity recorded in this window.</div>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                <div style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="Department workload metrics table">
+                  <table className="ep-table" style={{ fontSize: '12px' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
-                        <th style={{ padding: '8px' }}>Department</th>
-                        <th style={{ padding: '8px' }}>Submitted</th>
-                        <th style={{ padding: '8px' }}>Open Backlog</th>
-                        <th style={{ padding: '8px' }}>Overdue</th>
-                        <th style={{ padding: '8px' }}>SLA %</th>
+                      <tr>
+                        <th>Department</th>
+                        <th>Submitted</th>
+                        <th>Open Backlog</th>
+                        <th>Overdue</th>
+                        <th>SLA %</th>
                       </tr>
                     </thead>
                     <tbody>
                       {deptPerf.map((d) => (
-                        <tr key={d.department} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '8px', fontWeight: 700, color: '#0f172a' }}>{d.department}</td>
-                          <td style={{ padding: '8px' }}>{d.totalSubmittedInPeriod}</td>
-                          <td style={{ padding: '8px', fontWeight: 600, color: '#2563eb' }}>{d.openBacklogSnapshot}</td>
-                          <td style={{ padding: '8px', color: d.overdueOpenSnapshot > 0 ? '#dc2626' : '#475569' }}>
+                        <tr key={d.department}>
+                          <td style={{ fontWeight: 700 }}>{d.department}</td>
+                          <td className="ep-tabular">{d.totalSubmittedInPeriod}</td>
+                          <td className="ep-tabular" style={{ fontWeight: 700, color: 'var(--ep-primary)' }}>{d.openBacklogSnapshot}</td>
+                          <td className="ep-tabular" style={{ color: d.overdueOpenSnapshot > 0 ? 'var(--ep-danger)' : 'var(--ep-text-muted)' }}>
                             {d.overdueOpenSnapshot}
                           </td>
-                          <td style={{ padding: '8px', fontWeight: 600 }}>
+                          <td className="ep-tabular" style={{ fontWeight: 600 }}>
                             {d.slaComplianceRate !== null && d.slaComplianceRate !== undefined ? `${d.slaComplianceRate}%` : 'N/A'}
                           </td>
                         </tr>
@@ -417,7 +366,7 @@ const AnalyticsDashboard = () => {
               )}
             </section>
 
-            <section style={panelStyle} aria-label="Most requested catalog services">
+            <section className="ep-card" aria-label="Most requested catalog services">
               <h2 style={{ ...panelTitleStyle, marginBottom: '12px' }}>Top Requested Services</h2>
               {popularity.length === 0 ? (
                 <div style={emptyPanelStyle}>No service requests recorded in this period.</div>
@@ -425,20 +374,14 @@ const AnalyticsDashboard = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {popularity.map((svc) => (
                     <div key={svc.catalogItemId}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 600, color: '#0f172a' }}>
-                          {svc.title} <span style={{ color: '#94a3b8', fontWeight: 400 }}>({svc.department})</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px', gap: '8px' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--ep-text-primary)' }}>
+                          {svc.title} <span style={{ color: 'var(--ep-text-muted)', fontWeight: 400 }}>({svc.department})</span>
                         </span>
-                        <span style={{ fontWeight: 700, color: '#2563eb' }}>{svc.requestCount}</span>
+                        <span className="ep-tabular" style={{ fontWeight: 700, color: 'var(--ep-primary)' }}>{svc.requestCount}</span>
                       </div>
-                      <div style={{ height: '7px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div
-                          style={{
-                            width: `${Math.round((svc.requestCount / maxPopVal) * 100)}%`,
-                            height: '100%',
-                            backgroundColor: '#0f766e'
-                          }}
-                        />
+                      <div style={{ height: '7px', backgroundColor: 'var(--ep-bg-muted)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.round((svc.requestCount / maxPopVal) * 100)}%`, height: '100%', backgroundColor: 'var(--ep-secondary)' }} />
                       </div>
                     </div>
                   ))}
@@ -452,76 +395,20 @@ const AnalyticsDashboard = () => {
   );
 };
 
-const KpiCard = ({ label, value, subtext, color }) => (
-  <div
-    style={{
-      backgroundColor: '#fff',
-      borderRadius: '10px',
-      padding: '16px 18px',
-      border: '1px solid #e2e8f0',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-    }}
-  >
-    <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+const KpiCard = ({ label, value, subtext, accent }) => (
+  <div className="ep-card" style={{ borderTop: `3px solid ${accent}` }}>
+    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ep-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
       {label}
     </div>
-    <div style={{ fontSize: '26px', fontWeight: 800, color, margin: '6px 0 4px' }}>
+    <div className="ep-tabular" style={{ fontSize: '26px', fontWeight: 800, color: accent, margin: '6px 0 4px' }}>
       {value}
     </div>
-    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{subtext}</div>
+    <div style={{ fontSize: '11px', color: 'var(--ep-text-muted)' }}>{subtext}</div>
   </div>
 );
 
-const panelStyle = {
-  backgroundColor: '#fff',
-  borderRadius: '10px',
-  padding: '18px 20px',
-  border: '1px solid #e2e8f0',
-  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-};
-
-const panelTitleStyle = {
-  margin: 0,
-  fontSize: '15px',
-  fontWeight: 700,
-  color: '#0f172a'
-};
-
-const emptyPanelStyle = {
-  padding: '28px 12px',
-  textAlign: 'center',
-  fontSize: '13px',
-  color: '#94a3b8'
-};
-
-const filterLabelStyle = {
-  display: 'block',
-  fontSize: '11px',
-  fontWeight: 600,
-  color: '#475569',
-  marginBottom: '4px'
-};
-
-const filterInputStyle = {
-  width: '100%',
-  padding: '7px 10px',
-  borderRadius: '6px',
-  border: '1px solid #cbd5e1',
-  fontSize: '13px',
-  boxSizing: 'border-box',
-  backgroundColor: '#fff'
-};
-
-const presetBtnStyle = {
-  padding: '6px 12px',
-  borderRadius: '6px',
-  border: '1px solid #cbd5e1',
-  backgroundColor: '#fff',
-  color: '#334155',
-  fontSize: '12px',
-  fontWeight: 600,
-  cursor: 'pointer'
-};
+const panelTitleStyle = { margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--ep-text-primary)' };
+const emptyPanelStyle = { padding: '28px 12px', textAlign: 'center', fontSize: '13px', color: 'var(--ep-text-muted)' };
+const statMetaStyle = { color: 'var(--ep-text-muted)', display: 'block', fontSize: '11px' };
 
 export default AnalyticsDashboard;
-

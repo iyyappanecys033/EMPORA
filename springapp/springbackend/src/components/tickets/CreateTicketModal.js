@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ticketService from '../../services/ticketService';
+import { useToast } from '../../services/ToastContext';
 import Alert from '../common/Alert';
 
 const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCreated }) => {
+  const { showToast } = useToast();
   const [catalogItems, setCatalogItems] = useState([]);
   const [selectedItemId, setSelectedItemId] = useState(preselectedItem?.id || '');
   const [priority, setPriority] = useState('MEDIUM');
@@ -20,6 +22,15 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
       setTargetDepartment(preselectedItem.department || preselectedItem.targetDepartment || 'IT');
     }
   }, [preselectedItem]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !submitting) onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, submitting, onClose]);
 
   useEffect(() => {
     const fetchCatalog = async () => {
@@ -41,6 +52,9 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
 
   if (!isOpen) return null;
 
+  const selectedOffering =
+    catalogItems.find((item) => String(item.id) === String(selectedItemId)) || preselectedItem;
+
   const handleItemSelect = (e) => {
     const id = e.target.value;
     setSelectedItemId(id);
@@ -52,6 +66,7 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setErrorObj(null);
 
     if (!selectedItemId) {
@@ -73,6 +88,11 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
         description: justification.trim()
       };
       const created = await ticketService.submitTicket(payload);
+      showToast({
+        type: 'success',
+        title: 'Service Ticket Submitted',
+        message: created?.ticketNumber ? `Reference: ${created.ticketNumber}` : 'Request created successfully.'
+      });
       if (onTicketCreated) {
         onTicketCreated(created);
       }
@@ -85,22 +105,31 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
   };
 
   return (
-    <div style={modalOverlayStyle}>
-      <div style={modalContentStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '18px', color: '#0f172a', fontWeight: 700 }}>
-            Submit New Service Ticket
-          </h2>
+    <div
+      className="ep-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-ticket-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !submitting) onClose();
+      }}
+    >
+      <div className="ep-modal">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <div>
+            <h2 id="create-ticket-modal-title" style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--ep-text-primary)' }}>
+              Submit New Service Ticket
+            </h2>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ep-text-muted)' }}>
+              Select a catalog offering and provide clear business justification for faster fulfillment.
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              fontSize: '22px',
-              cursor: 'pointer',
-              color: '#64748b'
-            }}
+            disabled={submitting}
+            aria-label="Close ticket modal"
+            className="ep-btn ep-btn--ghost ep-btn--sm"
           >
             &times;
           </button>
@@ -116,46 +145,66 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
           />
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={fieldGroupStyle}>
-            <label htmlFor="serviceOfferingSelect" style={labelStyle}>Service Offering *</label>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '14px' }}>
+          <div>
+            <label htmlFor="serviceOfferingSelect" className="ep-label">Service Offering *</label>
             <select
               id="serviceOfferingSelect"
               value={selectedItemId}
               onChange={handleItemSelect}
               required
               disabled={loadingItems || submitting}
-              style={inputStyle}
+              className="ep-select"
             >
               <option value="">-- Select a Service --</option>
               {catalogItems.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.title || item.name} ({item.department || item.targetDepartment}) {(item.slaTargetHours || item.slaHours) ? `[${item.slaTargetHours || item.slaHours}h SLA]` : ''}
+                  {item.title || item.name} ({item.department || item.targetDepartment}){' '}
+                  {item.slaTargetHours || item.slaHours ? `[${item.slaTargetHours || item.slaHours}h SLA]` : ''}
                 </option>
               ))}
             </select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div style={fieldGroupStyle}>
-              <label htmlFor="targetDepartmentInput" style={labelStyle}>Target Department *</label>
+          {selectedOffering && selectedItemId && (
+            <div
+              style={{
+                padding: '10px 12px',
+                borderRadius: 'var(--ep-radius-sm)',
+                background: 'var(--ep-bg-subtle)',
+                border: '1px solid var(--ep-border)',
+                fontSize: '12px',
+                color: 'var(--ep-text-secondary)'
+              }}
+            >
+              <strong>Selected Service:</strong> {selectedOffering.title || selectedOffering.name || 'Catalog Item'}
+              {' • '}SLA: <strong>{selectedOffering.slaTargetHours || selectedOffering.slaHours || 24}h</strong>
+              {selectedOffering.requiresManagerApproval ? ' • Requires Manager Approval' : ' • Direct Queue Routing'}
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            <div>
+              <label htmlFor="targetDepartmentInput" className="ep-label">Target Department *</label>
               <input
                 id="targetDepartmentInput"
                 type="text"
                 value={targetDepartment}
                 onChange={(e) => setTargetDepartment(e.target.value)}
                 required
-                style={inputStyle}
+                disabled={submitting}
+                className="ep-input"
               />
             </div>
 
-            <div style={fieldGroupStyle}>
-              <label htmlFor="prioritySelect" style={labelStyle}>Priority *</label>
+            <div>
+              <label htmlFor="prioritySelect" className="ep-label">Priority *</label>
               <select
                 id="prioritySelect"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                style={inputStyle}
+                disabled={submitting}
+                className="ep-select"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -166,8 +215,8 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
             </div>
           </div>
 
-          <div style={fieldGroupStyle}>
-            <label htmlFor="justificationInput" style={labelStyle}>Business Justification & Details *</label>
+          <div>
+            <label htmlFor="justificationInput" className="ep-label">Business Justification &amp; Details *</label>
             <textarea
               id="justificationInput"
               rows={4}
@@ -176,46 +225,20 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
               placeholder="Describe the nature of your request and reason..."
               required
               maxLength={2000}
-              style={{ ...inputStyle, resize: 'vertical' }}
+              disabled={submitting}
+              className="ep-textarea"
             />
-            <div style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'right', marginTop: '2px' }}>
-              {justification.length} / 2000 characters
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ep-text-muted)', marginTop: '4px' }}>
+              <span>Include relevant context, deadlines, or asset references.</span>
+              <span className="ep-tabular">{justification.length} / 2000 characters</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={submitting}
-              style={{
-                padding: '9px 18px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                backgroundColor: '#fff',
-                color: '#475569',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+            <button type="button" onClick={onClose} disabled={submitting} className="ep-btn ep-btn--secondary">
               Cancel
             </button>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                padding: '9px 20px',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: submitting ? '#93c5fd' : '#2563eb',
-                color: '#fff',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: submitting ? 'not-allowed' : 'pointer'
-              }}
-            >
+            <button type="submit" disabled={submitting} className="ep-btn ep-btn--primary">
               {submitting ? 'Submitting...' : 'Submit Ticket'}
             </button>
           </div>
@@ -225,51 +248,4 @@ const CreateTicketModal = ({ preselectedItem = null, isOpen, onClose, onTicketCr
   );
 };
 
-const modalOverlayStyle = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(15, 23, 42, 0.6)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 100,
-  padding: '16px'
-};
-
-const modalContentStyle = {
-  backgroundColor: '#fff',
-  borderRadius: '12px',
-  width: '100%',
-  maxWidth: '560px',
-  padding: '24px',
-  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-  boxSizing: 'border-box'
-};
-
-const fieldGroupStyle = {
-  marginBottom: '14px'
-};
-
-const labelStyle = {
-  display: 'block',
-  fontSize: '12px',
-  fontWeight: 600,
-  color: '#334155',
-  marginBottom: '4px'
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '9px 12px',
-  borderRadius: '6px',
-  border: '1px solid #cbd5e1',
-  fontSize: '13px',
-  color: '#0f172a',
-  boxSizing: 'border-box'
-};
-
 export default CreateTicketModal;
-

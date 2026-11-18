@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../services/AuthContext';
+import Alert from './common/Alert';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const { login, register } = useAuth();
@@ -8,120 +9,161 @@ const LoginModal = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
+  const [errorObj, setErrorObj] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const userInputRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    previousFocusRef.current = document.activeElement;
+    setErrorObj(null);
+    setTimeout(() => userInputRef.current?.focus(), 20);
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !submitting) onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, [isOpen, submitting, onClose]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setErrorObj(null);
     setSubmitting(true);
     try {
       if (isRegister) {
-        await register({ username, password, email, phone });
+        await register({ username: username.trim(), password, email: email.trim(), phone: phone.trim() });
       } else {
-        await login(username, password);
+        await login(username.trim(), password);
       }
+      setPassword('');
       onClose();
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data || (isRegister ? 'Registration failed' : 'Invalid username or password');
-      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      const detail =
+        err?.detail ||
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        (isRegister ? 'Registration failed. Please verify your details.' : 'Invalid username or password.');
+      setErrorObj({
+        title: err?.title || (isRegister ? 'Registration Failed' : 'Authentication Failed'),
+        detail: typeof detail === 'string' ? detail : JSON.stringify(detail),
+        errors: err?.errors || []
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const fillQuick = (u, p) => {
-    setIsRegister(false);
-    setUsername(u);
-    setPassword(p);
-  };
-
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
-        <div style={styles.header}>
-          <h2 style={{ margin: 0, color: '#1e293b' }}>
-            {isRegister ? 'Create EPAMS Account' : 'Sign in to EPAMS'}
-          </h2>
-          <button style={styles.closeBtn} onClick={onClose}>&times;</button>
-        </div>
-
-        <p style={{ color: '#64748b', fontSize: '14px', margin: '8px 0 16px' }}>
-          {isRegister
-            ? 'Register a new employee/administrator account'
-            : 'Authenticate to manage users, roles, and profiles'}
-        </p>
-
-        {error && <div style={styles.errorAlert}>{error}</div>}
-
-        <div style={styles.quickBox}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Quick Demo Credentials:</span>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-            <button
-              type="button"
-              style={styles.quickBtn}
-              onClick={() => fillQuick('admin', 'admin123')}
-            >
-              Admin (admin / admin123)
-            </button>
-            <button
-              type="button"
-              style={styles.quickBtn}
-              onClick={() => fillQuick('john_doe', 'user123')}
-            >
-              User (john_doe / user123)
-            </button>
+    <div
+      className="ep-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="epams-auth-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !submitting) onClose();
+      }}
+    >
+      <div className="ep-modal" style={{ maxWidth: '440px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className="ep-brand-mark" aria-hidden="true">E</span>
+            <div>
+              <h2 id="epams-auth-title" style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--ep-text-primary)' }}>
+                {isRegister ? 'Create EPAMS Account' : 'Sign in to EPAMS'}
+              </h2>
+              <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ep-text-muted)' }}>
+                {isRegister ? 'Register your enterprise workspace profile' : 'Enterprise Employee Lifecycle & Service Portal'}
+              </p>
+            </div>
           </div>
+          <button
+            type="button"
+            className="ep-btn ep-btn--ghost ep-btn--sm"
+            onClick={onClose}
+            disabled={submitting}
+            aria-label="Close sign in dialog"
+          >
+            &times;
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ marginTop: '16px' }}>
-          <div style={styles.field}>
-            <label style={styles.label}>Username</label>
+        {errorObj && (
+          <Alert
+            type="error"
+            title={errorObj.title}
+            detail={errorObj.detail}
+            errors={errorObj.errors}
+            onClose={() => setErrorObj(null)}
+          />
+        )}
+
+        <form onSubmit={handleSubmit} style={{ marginTop: '18px', display: 'grid', gap: '14px' }}>
+          <div>
+            <label htmlFor="epams-login-username" className="ep-label">Username *</label>
             <input
+              ref={userInputRef}
+              id="epams-login-username"
               type="text"
+              autoComplete="username"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. admin"
-              style={styles.input}
+              placeholder="Enter your corporate username"
+              className="ep-input"
+              disabled={submitting}
             />
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
+          <div>
+            <label htmlFor="epams-login-password" className="ep-label">Password *</label>
             <input
+              id="epams-login-password"
               type="password"
+              autoComplete={isRegister ? 'new-password' : 'current-password'}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={styles.input}
+              placeholder="Enter your password"
+              className="ep-input"
+              disabled={submitting}
             />
           </div>
 
           {isRegister && (
             <>
-              <div style={styles.field}>
-                <label style={styles.label}>Email Address</label>
+              <div>
+                <label htmlFor="epams-reg-email" className="ep-label">Work Email *</label>
                 <input
+                  id="epams-reg-email"
                   type="email"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="employee@epams.com"
-                  style={styles.input}
+                  placeholder="name@company.com"
+                  className="ep-input"
+                  disabled={submitting}
                 />
               </div>
-              <div style={styles.field}>
-                <label style={styles.label}>Phone</label>
+              <div>
+                <label htmlFor="epams-reg-phone" className="ep-label">Phone Number</label>
                 <input
+                  id="epams-reg-phone"
                   type="tel"
+                  autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="9876543210"
-                  style={styles.input}
+                  placeholder="Optional contact number"
+                  className="ep-input"
+                  disabled={submitting}
                 />
               </div>
             </>
@@ -130,31 +172,40 @@ const LoginModal = ({ isOpen, onClose }) => {
           <button
             type="submit"
             disabled={submitting}
-            style={styles.submitBtn}
+            className="ep-btn ep-btn--primary"
+            style={{ width: '100%', minHeight: '42px', marginTop: '4px' }}
           >
             {submitting ? 'Authenticating...' : isRegister ? 'Register & Sign In' : 'Sign In'}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: '#64748b' }}>
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: 'var(--ep-text-muted)' }}>
           {isRegister ? (
             <span>
               Already have an account?{' '}
               <button
                 type="button"
-                style={styles.linkBtn}
-                onClick={() => { setIsRegister(false); setError(''); }}
+                className="ep-btn ep-btn--ghost ep-btn--sm"
+                onClick={() => {
+                  setIsRegister(false);
+                  setErrorObj(null);
+                }}
+                style={{ color: 'var(--ep-primary)', padding: '2px 6px' }}
               >
                 Sign In
               </button>
             </span>
           ) : (
             <span>
-              Need a new account?{' '}
+              Need a new workspace account?{' '}
               <button
                 type="button"
-                style={styles.linkBtn}
-                onClick={() => { setIsRegister(true); setError(''); }}
+                className="ep-btn ep-btn--ghost ep-btn--sm"
+                onClick={() => {
+                  setIsRegister(true);
+                  setErrorObj(null);
+                }}
+                style={{ color: 'var(--ep-primary)', padding: '2px 6px' }}
               >
                 Register
               </button>
@@ -164,106 +215,6 @@ const LoginModal = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    backdropFilter: 'blur(4px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    padding: '20px'
-  },
-  modal: {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    maxWidth: '440px',
-    width: '100%',
-    padding: '28px',
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  closeBtn: {
-    background: 'transparent',
-    border: 'none',
-    fontSize: '24px',
-    cursor: 'pointer',
-    color: '#64748b'
-  },
-  errorAlert: {
-    backgroundColor: '#fef2f2',
-    color: '#b91c1c',
-    border: '1px solid #fecaca',
-    padding: '10px 14px',
-    borderRadius: '6px',
-    fontSize: '13px',
-    marginBottom: '12px'
-  },
-  quickBox: {
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    padding: '10px 12px'
-  },
-  quickBtn: {
-    background: '#ffffff',
-    border: '1px solid #cbd5e1',
-    borderRadius: '6px',
-    padding: '6px 10px',
-    fontSize: '12px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    color: '#0284c7'
-  },
-  field: {
-    marginBottom: '14px',
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  label: {
-    fontSize: '13px',
-    fontWeight: 600,
-    marginBottom: '6px',
-    color: '#334155'
-  },
-  input: {
-    padding: '10px 12px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    fontSize: '14px',
-    outline: 'none'
-  },
-  submitBtn: {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#0284c7',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '6px',
-    fontWeight: 600,
-    fontSize: '15px',
-    cursor: 'pointer',
-    marginTop: '6px'
-  },
-  linkBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#0284c7',
-    fontWeight: 600,
-    cursor: 'pointer',
-    padding: 0
-  }
 };
 
 export default LoginModal;

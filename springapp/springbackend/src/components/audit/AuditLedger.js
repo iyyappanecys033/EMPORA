@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import ticketService from '../../services/ticketService';
-import LoadingSpinner from '../common/LoadingSpinner';
+import { TableSkeleton } from '../common/LoadingSkeleton';
 import EmptyState from '../common/EmptyState';
 import Pagination from '../common/Pagination';
 import Alert from '../common/Alert';
+import { ShieldIcon, LockIcon } from '../common/Icons';
 
 const AuditLedger = () => {
   const [logs, setLogs] = useState([]);
@@ -11,6 +12,7 @@ const AuditLedger = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const [verificationReport, setVerificationReport] = useState(null);
   const [verifying, setVerifying] = useState(false);
   const [alert, setAlert] = useState(null);
@@ -47,73 +49,57 @@ const AuditLedger = () => {
     }
   };
 
+  const visibleLogs = useMemo(() => {
+    if (!searchQuery.trim()) return logs;
+    const q = searchQuery.toLowerCase();
+    return logs.filter(
+      (log) =>
+        log.actorUsername?.toLowerCase().includes(q) ||
+        log.action?.toLowerCase().includes(q) ||
+        log.targetUsername?.toLowerCase().includes(q) ||
+        log.details?.toLowerCase().includes(q)
+    );
+  }, [logs, searchQuery]);
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="ep-page-header">
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>
-            Cryptographic Audit Ledger
-          </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-            Immutable SHA-256 hash-chain verification & regulatory lifecycle audit trail.
+          <h1 className="ep-page-title">Cryptographic Audit Ledger</h1>
+          <p className="ep-page-subtitle">
+            Immutable SHA-256 hash-chain verification &amp; regulatory lifecycle audit trail.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleVerifyChain}
-          disabled={verifying}
-          style={{
-            backgroundColor: '#0f172a',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '9px 18px',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: verifying ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }}
-        >
-          <span>🔒</span> {verifying ? 'Verifying Chain...' : 'Verify Cryptographic Chain'}
+        <button type="button" onClick={handleVerifyChain} disabled={verifying} className="ep-btn ep-btn--primary">
+          <LockIcon size={15} /> {verifying ? 'Verifying Chain...' : 'Verify Cryptographic Chain'}
         </button>
       </div>
 
       {alert && (
-        <Alert
-          type="error"
-          title={alert.title}
-          detail={alert.detail}
-          onClose={() => setAlert(null)}
-        />
+        <Alert type="error" title={alert.title} detail={alert.detail} onClose={() => setAlert(null)} />
       )}
 
-      {/* Verification Report Card */}
       {verificationReport && (
         <div
+          role="status"
+          className="ep-card"
           style={{
-            backgroundColor: verificationReport.valid ? '#f0fdf4' : '#fef2f2',
-            border: `1px solid ${verificationReport.valid ? '#bbf7d0' : '#fecaca'}`,
-            borderRadius: '10px',
-            padding: '18px 22px',
-            marginBottom: '24px'
+            backgroundColor: verificationReport.valid ? 'var(--ep-success-bg)' : 'var(--ep-danger-bg)',
+            borderColor: verificationReport.valid ? 'var(--ep-success-border)' : 'var(--ep-danger-border)',
+            marginBottom: '20px'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '20px' }}>
-                {verificationReport.valid ? '🛡️' : '🚨'}
-              </span>
+              <ShieldIcon size={22} />
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: verificationReport.valid ? '#166534' : '#991b1b' }}>
+                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: verificationReport.valid ? 'var(--ep-success-text)' : 'var(--ep-danger-text)' }}>
                   {verificationReport.valid
                     ? 'Cryptographic Audit Chain Intact — 100% Valid'
                     : 'Tamper Detected in Audit Chain!'}
-                </h3>
-                <span style={{ fontSize: '12px', color: verificationReport.valid ? '#15803d' : '#b91c1c' }}>
+                </h2>
+                <span style={{ fontSize: '12px', color: verificationReport.valid ? 'var(--ep-success-text)' : 'var(--ep-danger-text)' }}>
                   {verificationReport.valid
                     ? 'Monotonic sequence, parent hash linkage, and entry SHA-256 checksums verified.'
                     : 'Hash mismatch or sequence violation discovered.'}
@@ -124,7 +110,8 @@ const AuditLedger = () => {
             <button
               type="button"
               onClick={() => setVerificationReport(null)}
-              style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#64748b' }}
+              aria-label="Dismiss verification report"
+              className="ep-btn ep-btn--ghost ep-btn--sm"
             >
               &times;
             </button>
@@ -133,51 +120,52 @@ const AuditLedger = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
               gap: '12px',
-              backgroundColor: '#fff',
-              padding: '12px',
-              borderRadius: '6px',
+              backgroundColor: 'var(--ep-bg-surface)',
+              padding: '12px 14px',
+              borderRadius: 'var(--ep-radius-sm)',
+              border: '1px solid var(--ep-border)',
               fontSize: '12px'
             }}
           >
             <div>
-              <span style={{ color: '#64748b', display: 'block' }}>Chained Records</span>
-              <strong style={{ fontSize: '14px', color: '#0f172a' }}>
-                {verificationReport.totalChainedRecords}
+              <span style={{ color: 'var(--ep-text-muted)', display: 'block' }}>Chained Records</span>
+              <strong className="ep-tabular" style={{ fontSize: '15px', color: 'var(--ep-text-primary)' }}>
+                {verificationReport.chainedRecordsCount ?? verificationReport.totalChainedRecords ?? verificationReport.totalRecordsVerified ?? 0}
               </strong>
             </div>
 
             <div>
-              <span style={{ color: '#64748b', display: 'block' }}>Unchained IAM Logs</span>
-              <strong style={{ fontSize: '14px', color: '#0f172a' }}>
-                {verificationReport.totalUnchainedRecords}
+              <span style={{ color: 'var(--ep-text-muted)', display: 'block' }}>Unchained IAM Logs</span>
+              <strong className="ep-tabular" style={{ fontSize: '15px', color: 'var(--ep-text-primary)' }}>
+                {verificationReport.unchainedLegacyCount ?? verificationReport.totalUnchainedRecords ?? 0}
               </strong>
             </div>
 
             <div>
-              <span style={{ color: '#64748b', display: 'block' }}>Last Sequence</span>
-              <strong style={{ fontSize: '14px', color: '#0f172a' }}>
-                #{verificationReport.lastSequence}
+              <span style={{ color: 'var(--ep-text-muted)', display: 'block' }}>Last Sequence</span>
+              <strong className="ep-tabular" style={{ fontSize: '15px', color: 'var(--ep-text-primary)' }}>
+                #{verificationReport.headSequence ?? verificationReport.lastSequence ?? 0}
               </strong>
             </div>
 
             <div>
-              <span style={{ color: '#64748b', display: 'block' }}>Head Hash</span>
-              <code style={{ fontSize: '11px', color: '#2563eb', wordBreak: 'break-all' }}>
-                {verificationReport.headHash
-                  ? `${verificationReport.headHash.substring(0, 16)}...`
+              <span style={{ color: 'var(--ep-text-muted)', display: 'block' }}>Head Hash</span>
+              <code style={{ fontSize: '11px', color: 'var(--ep-primary)', wordBreak: 'break-all' }}>
+                {(verificationReport.headHash || verificationReport.calculatedHeadHash)
+                  ? `${(verificationReport.headHash || verificationReport.calculatedHeadHash).substring(0, 16)}...`
                   : 'Genesis Block'}
               </code>
             </div>
           </div>
 
           {verificationReport.violations && verificationReport.violations.length > 0 && (
-            <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#fee2e2', borderRadius: '6px' }}>
-              <strong style={{ color: '#991b1b', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+            <div style={{ marginTop: '12px', padding: '10px 12px', backgroundColor: 'var(--ep-bg-surface)', border: '1px solid var(--ep-danger-border)', borderRadius: '6px' }}>
+              <strong style={{ color: 'var(--ep-danger-text)', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
                 Discrepancies:
               </strong>
-              <ul style={{ margin: 0, paddingLeft: '18px', color: '#b91c1c', fontSize: '12px' }}>
+              <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--ep-danger-text)', fontSize: '12px' }}>
                 {verificationReport.violations.map((v, i) => (
                   <li key={i}>{v}</li>
                 ))}
@@ -187,75 +175,92 @@ const AuditLedger = () => {
         </div>
       )}
 
-      {/* Audit Logs Table */}
+      {/* Filter Bar */}
+      <div className="ep-filter-bar">
+        <div style={{ flex: 1, minWidth: '220px' }}>
+          <input
+            type="search"
+            aria-label="Filter audit events on current page"
+            placeholder="Filter current page by actor, action, target, or details..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="ep-input"
+          />
+        </div>
+        <span className="ep-tabular" style={{ fontSize: '12px', color: 'var(--ep-text-muted)' }}>
+          {totalElements} total ledger events
+        </span>
+      </div>
+
       {loading ? (
-        <LoadingSpinner message="Loading audit event ledger..." />
-      ) : logs.length === 0 ? (
+        <TableSkeleton rows={6} />
+      ) : visibleLogs.length === 0 ? (
         <EmptyState
-          icon="📜"
+          icon={<ShieldIcon size={26} />}
           title="No audit events recorded"
-          description="Operational events will appear here once service actions occur."
+          description={searchQuery ? 'No events on this page match your filter.' : 'Operational events will appear here once service actions occur.'}
         />
       ) : (
-        <div style={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+        <div className="ep-table-wrap" tabIndex={0} role="region" aria-label="Cryptographic audit ledger table">
+          <table className="ep-table">
             <thead>
-              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Seq #</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Timestamp</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Actor</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Action</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Target</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Details</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Hash (SHA-256)</th>
+              <tr>
+                <th>Seq #</th>
+                <th>Timestamp</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Details</th>
+                <th>Hash (SHA-256)</th>
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
-                <tr
-                  key={log.id}
-                  style={{ borderBottom: '1px solid #f1f5f9' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <td style={{ padding: '12px 16px', fontWeight: 700, color: log.sequenceNumber ? '#2563eb' : '#94a3b8' }}>
+              {visibleLogs.map((log) => (
+                <tr key={log.id}>
+                  <td className="ep-tabular" style={{ fontWeight: 700, color: log.sequenceNumber ? 'var(--ep-primary)' : 'var(--ep-text-muted)' }}>
                     {log.sequenceNumber ? `#${log.sequenceNumber}` : '—'}
                   </td>
-                  <td style={{ padding: '12px 16px', color: '#64748b', fontSize: '12px' }}>
+                  <td className="ep-tabular" style={{ color: 'var(--ep-text-muted)', fontSize: '12px', whiteSpace: 'nowrap' }}>
                     {log.timestamp ? new Date(log.timestamp).toLocaleString() : ''}
                   </td>
-                  <td style={{ padding: '12px 16px', fontWeight: 600, color: '#1e293b' }}>
-                    {log.actorUsername}
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={{ fontWeight: 600 }}>{log.actorUsername}</td>
+                  <td>
                     <span
                       style={{
                         fontSize: '11px',
                         padding: '2px 8px',
                         borderRadius: '4px',
-                        backgroundColor: '#f1f5f9',
-                        color: '#334155',
-                        fontWeight: 700
+                        backgroundColor: 'var(--ep-bg-muted)',
+                        color: 'var(--ep-text-primary)',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap'
                       }}
                     >
                       {log.action}
                     </span>
                   </td>
-                  <td style={{ padding: '12px 16px', color: '#475569' }}>
-                    {log.targetUsername || '—'}
-                  </td>
-                  <td style={{ padding: '12px 16px', maxWidth: '240px', color: '#475569' }}>
-                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <td style={{ color: 'var(--ep-text-secondary)' }}>{log.targetUsername || '—'}</td>
+                  <td style={{ maxWidth: '240px', color: 'var(--ep-text-secondary)' }}>
+                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={log.details || ''}>
                       {log.details || '—'}
                     </div>
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td>
                     {log.currentHash ? (
-                      <code style={{ fontSize: '11px', color: '#0f766e', backgroundColor: '#f0fdfa', padding: '2px 6px', borderRadius: '4px' }}>
+                      <code
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--ep-secondary)',
+                          backgroundColor: 'var(--ep-secondary-subtle)',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontFamily: 'var(--ep-font-mono)'
+                        }}
+                      >
                         {log.currentHash.substring(0, 10)}...
                       </code>
                     ) : (
-                      <span style={{ color: '#cbd5e1' }}>Unchained</span>
+                      <span style={{ color: 'var(--ep-text-muted)', fontSize: '12px' }}>Unchained</span>
                     )}
                   </td>
                 </tr>
@@ -264,12 +269,7 @@ const AuditLedger = () => {
           </table>
 
           {totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalElements={totalElements}
-              onPageChange={(p) => setPage(p)}
-            />
+            <Pagination currentPage={page} totalPages={totalPages} totalElements={totalElements} onPageChange={setPage} />
           )}
         </div>
       )}
@@ -278,4 +278,3 @@ const AuditLedger = () => {
 };
 
 export default AuditLedger;
-

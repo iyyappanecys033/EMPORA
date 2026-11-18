@@ -4,22 +4,25 @@ const Pagination = ({ currentPage = 0, totalPages = 1, onPageChange, totalElemen
   if (totalPages <= 1 && !totalElements) return null;
 
   return (
-    <div
+    <nav
+      aria-label="Pagination"
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '10px',
         padding: '12px 16px',
-        borderTop: '1px solid #e2e8f0',
-        backgroundColor: '#fafafa',
+        borderTop: '1px solid var(--ep-border)',
+        backgroundColor: 'var(--ep-bg-subtle)',
         fontSize: '13px',
-        color: '#64748b'
+        color: 'var(--ep-text-muted)'
       }}
     >
       <div>
         {totalElements !== undefined && (
-          <span>
-            Total: <strong>{totalElements}</strong> items
+          <span className="ep-tabular">
+            Total: <strong style={{ color: 'var(--ep-text-primary)' }}>{totalElements}</strong> items
           </span>
         )}
       </div>
@@ -29,21 +32,15 @@ const Pagination = ({ currentPage = 0, totalPages = 1, onPageChange, totalElemen
           type="button"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 0}
-          style={{
-            padding: '6px 12px',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e1',
-            backgroundColor: currentPage <= 0 ? '#f1f5f9' : '#fff',
-            color: currentPage <= 0 ? '#94a3b8' : '#334155',
-            cursor: currentPage <= 0 ? 'not-allowed' : 'pointer',
-            fontSize: '12px',
-            fontWeight: 500
-          }}
+          className="ep-btn ep-btn--secondary ep-btn--sm"
         >
           &larr; Previous
         </button>
 
-        <span style={{ padding: '0 8px', fontWeight: 600, color: '#1e293b' }}>
+        <span
+          className="ep-tabular"
+          style={{ padding: '0 8px', fontWeight: 600, color: 'var(--ep-text-primary)', fontSize: '12px' }}
+        >
           Page {currentPage + 1} of {Math.max(totalPages, 1)}
         </span>
 
@@ -51,23 +48,13 @@ const Pagination = ({ currentPage = 0, totalPages = 1, onPageChange, totalElemen
           type="button"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1}
-          style={{
-            padding: '6px 12px',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e1',
-            backgroundColor: currentPage >= totalPages - 1 ? '#f1f5f9' : '#fff',
-            color: currentPage >= totalPages - 1 ? '#94a3b8' : '#334155',
-            cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
-            fontSize: '12px',
-            fontWeight: 500
-          }}
+          className="ep-btn ep-btn--secondary ep-btn--sm"
         >
           Next &rarr;
         </button>
       </div>
-    </div>
+    </nav>
   );
 };
 
 export default Pagination;
-

@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import ticketService from '../../services/ticketService';
 import { useAuth } from '../../services/AuthContext';
+import { useToast } from '../../services/ToastContext';
 import { StatusBadge, PriorityBadge } from '../common/Badge';
+import StatusTimeline from '../common/StatusTimeline';
+import Avatar from '../common/Avatar';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Alert from '../common/Alert';
 import TicketComments from './TicketComments';
@@ -11,11 +14,12 @@ const TicketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser, isResolver, isAdmin } = useAuth();
+  const { showToast } = useToast();
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionReason, setActionReason] = useState('');
-  const [statusModalType, setStatusModalType] = useState(null); // 'CANCEL' | 'REOPEN' | 'TRANSITION'
+  const [statusModalType, setStatusModalType] = useState(null);
   const [targetStatus, setTargetStatus] = useState('');
   const [alert, setAlert] = useState(null);
 
@@ -36,6 +40,15 @@ const TicketDetail = () => {
     fetchTicket();
   }, [fetchTicket]);
 
+  useEffect(() => {
+    if (!statusModalType) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !actionLoading) setStatusModalType(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [statusModalType, actionLoading]);
+
   const handleActionSubmit = async (e) => {
     e.preventDefault();
     if (!actionReason.trim()) {
@@ -53,6 +66,11 @@ const TicketDetail = () => {
       } else if (statusModalType === 'TRANSITION') {
         await ticketService.updateTicketStatus(ticket.id, targetStatus, actionReason.trim(), ticket.version);
       }
+      showToast({
+        type: 'success',
+        title: 'Ticket Updated',
+        message: `Lifecycle action recorded for ${ticket.ticketNumber}.`
+      });
       setStatusModalType(null);
       setActionReason('');
       fetchTicket();
@@ -69,6 +87,7 @@ const TicketDetail = () => {
     setAlert(null);
     try {
       await ticketService.assignTicket(ticket.id, currentUser.id);
+      showToast({ type: 'success', title: 'Ticket Assigned', message: `${ticket.ticketNumber} assigned to you.` });
       fetchTicket();
     } catch (err) {
       setAlert(err);
@@ -83,26 +102,10 @@ const TicketDetail = () => {
 
   if (!ticket && alert) {
     return (
-      <div style={{ maxWidth: '800px', margin: '40px auto' }}>
-        <Alert
-          type="error"
-          title={alert.title}
-          detail={alert.detail}
-        />
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{
-            marginTop: '16px',
-            padding: '8px 16px',
-            backgroundColor: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          &larr; Back to Safety
+      <div style={{ maxWidth: '760px', margin: '32px auto' }}>
+        <Alert type="error" title={alert.title} detail={alert.detail} />
+        <button type="button" onClick={() => navigate(-1)} className="ep-btn ep-btn--primary" style={{ marginTop: '12px' }}>
+          &larr; Go Back
         </button>
       </div>
     );
@@ -114,59 +117,38 @@ const TicketDetail = () => {
   const isAssignee = currentUser?.username === ticket.assigneeUsername;
   const canManage = isAssignee || (isResolver && currentUser?.department === ticket.department) || isAdmin;
 
-  const canCancel = isRequester && ['SUBMITTED', 'PENDING_APPROVAL', 'ASSIGNED'].includes(ticket.status);
+  const canCancel = isRequester && ['SUBMITTED', 'PENDING_APPROVAL', 'PENDING_SECONDARY_APPROVAL', 'ASSIGNED'].includes(ticket.status);
   const canReopen = isRequester && ticket.status === 'RESOLVED';
+  const isSlaBreached =
+    ticket.slaTargetDate &&
+    !['RESOLVED', 'CLOSED', 'REJECTED', 'CANCELLED', 'ON_HOLD'].includes(ticket.status) &&
+    new Date(ticket.slaTargetDate) < new Date();
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Top Breadcrumb & Navigation */}
-      <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748b' }}>
-        <Link to="/tickets" style={{ color: '#2563eb', textDecoration: 'none' }}>
-          &larr; My Tickets
-        </Link>
-        <span>/</span>
-        <span style={{ fontWeight: 600, color: '#1e293b' }}>{ticket.ticketNumber}</span>
-      </div>
-
+    <div style={{ maxWidth: '1040px', margin: '0 auto' }}>
       {alert && (
-        <Alert
-          type="error"
-          title={alert.title}
-          detail={alert.detail}
-          errors={alert.errors}
-          onClose={() => setAlert(null)}
-        />
+        <Alert type="error" title={alert.title} detail={alert.detail} errors={alert.errors} onClose={() => setAlert(null)} />
       )}
 
-      {/* Main Ticket Card */}
-      <div
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: '10px',
-          border: '1px solid #e2e8f0',
-          padding: '24px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-        }}
-      >
+      <div className="ep-card">
         {/* Header Row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+              <h1 style={{ margin: 0, fontSize: '21px', fontWeight: 800, fontFamily: 'var(--ep-font-mono)', color: 'var(--ep-text-primary)' }}>
                 {ticket.ticketNumber}
               </h1>
               <StatusBadge status={ticket.status} />
               <PriorityBadge priority={ticket.priority} />
             </div>
-            <div style={{ fontSize: '13px', color: '#64748b' }}>
-              Department: <strong>{ticket.department}</strong>
+            <div style={{ fontSize: '13px', color: 'var(--ep-text-muted)' }}>
+              Department: <strong style={{ color: 'var(--ep-text-primary)' }}>{ticket.department}</strong>
               {ticket.catalogItemTitle ? ` • Service: ${ticket.catalogItemTitle}` : ''}
-              {` • Version token: ${ticket.version}`}
+              {` • Version ${ticket.version}`}
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {canCancel && (
               <button
                 type="button"
@@ -174,16 +156,7 @@ const TicketDetail = () => {
                   setStatusModalType('CANCEL');
                   setActionReason('');
                 }}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '6px',
-                  border: '1px solid #ef4444',
-                  backgroundColor: '#fef2f2',
-                  color: '#dc2626',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                className="ep-btn ep-btn--danger-outline ep-btn--sm"
               >
                 Cancel Ticket
               </button>
@@ -196,238 +169,199 @@ const TicketDetail = () => {
                   setStatusModalType('REOPEN');
                   setActionReason('');
                 }}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '6px',
-                  border: '1px solid #0284c7',
-                  backgroundColor: '#f0f9ff',
-                  color: '#0284c7',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                className="ep-btn ep-btn--subtle ep-btn--sm"
               >
-                Reopen Ticket (48h Window)
+                Reopen Ticket (48h Business Window)
               </button>
             )}
 
-            {/* Specialist Actions */}
             {canManage && !ticket.assigneeUsername && (
-              <button
-                type="button"
-                onClick={handleSelfAssign}
-                disabled={actionLoading}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '6px',
-                  border: '1px solid #2563eb',
-                  backgroundColor: '#2563eb',
-                  color: '#fff',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
+              <button type="button" onClick={handleSelfAssign} disabled={actionLoading} className="ep-btn ep-btn--primary ep-btn--sm">
                 Assign to Me
               </button>
             )}
 
-            {canManage && (
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {ticket.status === 'ASSIGNED' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusModalType('TRANSITION');
-                      setTargetStatus('IN_PROGRESS');
-                      setActionReason('Commenced active diagnosis and resolution.');
-                    }}
-                    style={actionBtnStyle}
-                  >
-                    Start Progress
-                  </button>
-                )}
+            {canManage && ticket.status === 'ASSIGNED' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusModalType('TRANSITION');
+                  setTargetStatus('IN_PROGRESS');
+                  setActionReason('Commenced active diagnosis and resolution.');
+                }}
+                className="ep-btn ep-btn--primary ep-btn--sm"
+              >
+                Start Progress
+              </button>
+            )}
 
-                {ticket.status === 'IN_PROGRESS' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStatusModalType('TRANSITION');
-                        setTargetStatus('ON_HOLD');
-                        setActionReason('Awaiting customer input or third-party parts.');
-                      }}
-                      style={{ ...actionBtnStyle, backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}
-                    >
-                      Put On Hold
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStatusModalType('TRANSITION');
-                        setTargetStatus('RESOLVED');
-                        setActionReason('Issue diagnosed and resolved successfully.');
-                      }}
-                      style={{ ...actionBtnStyle, backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0' }}
-                    >
-                      Mark Resolved
-                    </button>
-                  </>
-                )}
+            {canManage && ticket.status === 'IN_PROGRESS' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusModalType('TRANSITION');
+                    setTargetStatus('ON_HOLD');
+                    setActionReason('Awaiting requester clarification or external dependency.');
+                  }}
+                  className="ep-btn ep-btn--secondary ep-btn--sm"
+                >
+                  Put On Hold
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusModalType('TRANSITION');
+                    setTargetStatus('RESOLVED');
+                    setActionReason('Issue diagnosed and resolved successfully.');
+                  }}
+                  className="ep-btn ep-btn--success ep-btn--sm"
+                >
+                  Mark Resolved
+                </button>
+              </>
+            )}
 
-                {ticket.status === 'ON_HOLD' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusModalType('TRANSITION');
-                      setTargetStatus('IN_PROGRESS');
-                      setActionReason('Resuming resolution activity.');
-                    }}
-                    style={actionBtnStyle}
-                  >
-                    Resume Progress
-                  </button>
-                )}
+            {canManage && ticket.status === 'ON_HOLD' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusModalType('TRANSITION');
+                  setTargetStatus('IN_PROGRESS');
+                  setActionReason('Resuming resolution activity.');
+                }}
+                className="ep-btn ep-btn--primary ep-btn--sm"
+              >
+                Resume Progress
+              </button>
+            )}
 
-                {ticket.status === 'RESOLVED' && (isAdmin || isAssignee) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusModalType('TRANSITION');
-                      setTargetStatus('CLOSED');
-                      setActionReason('Resolution confirmed and verified.');
-                    }}
-                    style={{ ...actionBtnStyle, backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1' }}
-                  >
-                    Close Ticket
-                  </button>
-                )}
-              </div>
+            {canManage && ticket.status === 'RESOLVED' && (isAdmin || isAssignee) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusModalType('TRANSITION');
+                  setTargetStatus('CLOSED');
+                  setActionReason('Resolution confirmed and verified.');
+                }}
+                className="ep-btn ep-btn--secondary ep-btn--sm"
+              >
+                Close Ticket
+              </button>
             )}
           </div>
         </div>
 
-        {/* Justification & Description */}
-        <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '6px' }}>
+        {/* 11-State Lifecycle Progress Timeline */}
+        <StatusTimeline status={ticket.status} />
+
+        {/* Description */}
+        <div
+          style={{
+            backgroundColor: 'var(--ep-bg-subtle)',
+            border: '1px solid var(--ep-border)',
+            borderRadius: 'var(--ep-radius-sm)',
+            padding: '16px',
+            marginBottom: '20px'
+          }}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ep-text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Request Justification / Description
           </div>
-          <div style={{ fontSize: '14px', color: '#1e293b', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+          <div style={{ fontSize: '14px', color: 'var(--ep-text-primary)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
             {ticket.description}
           </div>
         </div>
 
-        {/* Metadata Details Grid */}
+        {/* Metadata Grid */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px',
-            borderTop: '1px solid #f1f5f9',
+            borderTop: '1px solid var(--ep-border)',
             paddingTop: '16px',
             fontSize: '13px'
           }}
         >
-          <div>
-            <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600 }}>Requester</div>
-            <div style={{ fontWeight: 600, color: '#1e293b', marginTop: '2px' }}>
-              👤 {ticket.requesterUsername}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Avatar name={ticket.requesterUsername} size={32} />
+            <div>
+              <div style={{ color: 'var(--ep-text-muted)', fontSize: '11px', fontWeight: 600 }}>Requester</div>
+              <div style={{ fontWeight: 600, color: 'var(--ep-text-primary)' }}>{ticket.requesterUsername}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Avatar name={ticket.assigneeUsername || '?'} size={32} />
+            <div>
+              <div style={{ color: 'var(--ep-text-muted)', fontSize: '11px', fontWeight: 600 }}>Assigned Specialist</div>
+              <div style={{ fontWeight: 600, color: ticket.assigneeUsername ? 'var(--ep-text-primary)' : 'var(--ep-text-muted)' }}>
+                {ticket.assigneeUsername || 'Unassigned'}
+              </div>
             </div>
           </div>
 
           <div>
-            <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600 }}>Assigned Specialist</div>
-            <div style={{ fontWeight: 600, color: '#1e293b', marginTop: '2px' }}>
-              🛠️ {ticket.assigneeUsername || 'Unassigned'}
+            <div style={{ color: 'var(--ep-text-muted)', fontSize: '11px', fontWeight: 600 }}>SLA Target Resolution</div>
+            <div className="ep-tabular" style={{ fontWeight: 700, color: isSlaBreached ? 'var(--ep-danger-text)' : 'var(--ep-text-primary)', marginTop: '2px' }}>
+              {ticket.slaTargetDate ? new Date(ticket.slaTargetDate).toLocaleString() : 'N/A'}
+              {isSlaBreached && ' (Overdue)'}
             </div>
           </div>
 
           <div>
-            <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600 }}>SLA Target Resolution</div>
-            <div style={{ fontWeight: 600, color: '#1e293b', marginTop: '2px' }}>
-              ⏱️ {ticket.slaTargetDate ? new Date(ticket.slaTargetDate).toLocaleString() : 'N/A'}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600 }}>Paused Time</div>
-            <div style={{ fontWeight: 600, color: '#1e293b', marginTop: '2px' }}>
-              ⏸️ {ticket.totalPausedMinutes || 0} minutes
+            <div style={{ color: 'var(--ep-text-muted)', fontSize: '11px', fontWeight: 600 }}>Paused SLA Time</div>
+            <div className="ep-tabular" style={{ fontWeight: 600, color: 'var(--ep-text-primary)', marginTop: '2px' }}>
+              {ticket.totalPausedMinutes || 0} minutes
             </div>
           </div>
         </div>
       </div>
 
-      {/* Discussion & Comments */}
       <TicketComments ticketId={ticket.id} />
 
-      {/* Action / Reason Modal */}
       {statusModalType && (
-        <div style={modalOverlayStyle}>
-          <div style={modalContentStyle}>
-            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#0f172a' }}>
+        <div
+          className="ep-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ticket-action-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !actionLoading) setStatusModalType(null);
+          }}
+        >
+          <div className="ep-modal" style={{ maxWidth: '500px' }}>
+            <h3 id="ticket-action-modal-title" style={{ margin: '0 0 8px', fontSize: '17px', fontWeight: 700 }}>
               {statusModalType === 'CANCEL'
                 ? 'Cancel Service Ticket'
                 : statusModalType === 'REOPEN'
                 ? 'Reopen Service Ticket'
-                : `Transition Ticket to ${targetStatus}`}
+                : `Transition Ticket to ${targetStatus.replace(/_/g, ' ')}`}
             </h3>
 
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 14px' }}>
-              Please provide a valid reason or notes for recording in the audit trail.
+            <p style={{ fontSize: '13px', color: 'var(--ep-text-muted)', margin: '0 0 14px' }}>
+              Provide clear justification for recording in the immutable cryptographic audit chain.
             </p>
 
             <form onSubmit={handleActionSubmit}>
+              <label htmlFor="ticket-action-reason" className="ep-label">Reason / Diagnostic Notes *</label>
               <textarea
+                id="ticket-action-reason"
                 rows={3}
                 value={actionReason}
                 onChange={(e) => setActionReason(e.target.value)}
                 placeholder="Enter justification or diagnostic notes..."
                 required
                 maxLength={1000}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '13px',
-                  boxSizing: 'border-box'
-                }}
+                className="ep-textarea"
               />
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-                <button
-                  type="button"
-                  onClick={() => setStatusModalType(null)}
-                  disabled={actionLoading}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#fff',
-                    color: '#475569',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
+                <button type="button" onClick={() => setStatusModalType(null)} disabled={actionLoading} className="ep-btn ep-btn--secondary">
                   Close
                 </button>
-
-                <button
-                  type="submit"
-                  disabled={actionLoading || !actionReason.trim()}
-                  style={{
-                    padding: '8px 18px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    backgroundColor: actionLoading || !actionReason.trim() ? '#93c5fd' : '#2563eb',
-                    color: '#fff',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: actionLoading || !actionReason.trim() ? 'not-allowed' : 'pointer'
-                  }}
-                >
+                <button type="submit" disabled={actionLoading || !actionReason.trim()} className="ep-btn ep-btn--primary">
                   {actionLoading ? 'Saving...' : 'Confirm Action'}
                 </button>
               </div>
@@ -439,39 +373,4 @@ const TicketDetail = () => {
   );
 };
 
-const actionBtnStyle = {
-  padding: '7px 14px',
-  borderRadius: '6px',
-  border: '1px solid #2563eb',
-  backgroundColor: '#eff6ff',
-  color: '#2563eb',
-  fontSize: '12px',
-  fontWeight: 600,
-  cursor: 'pointer'
-};
-
-const modalOverlayStyle = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(15, 23, 42, 0.6)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 100,
-  padding: '16px'
-};
-
-const modalContentStyle = {
-  backgroundColor: '#fff',
-  borderRadius: '10px',
-  width: '100%',
-  maxWidth: '500px',
-  padding: '24px',
-  boxSizing: 'border-box'
-};
-
 export default TicketDetail;
-

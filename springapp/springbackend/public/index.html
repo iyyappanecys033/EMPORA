@@ -4,17 +4,44 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#1e1b4b" />
     <meta
       name="description"
-      content="SpringApp Frontend"
+      content="EPAMS — Employee Lifecycle and Service Management Platform"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <title>SpringApp</title>
+    <title>EPAMS — Enterprise Employee Workspace</title>
+    <script>
+      (function () {
+        try {
+          var raw = window.localStorage.getItem('epams.preferences');
+          var prefs = raw ? JSON.parse(raw) : {};
+          var mode = prefs.theme || 'system';
+          var sysDark =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var resolved =
+            mode === 'dark' || (mode === 'system' && sysDark) ? 'dark' : 'light';
+          var root = document.documentElement;
+          root.setAttribute('data-theme', resolved);
+          root.setAttribute('data-density', prefs.density || 'comfortable');
+          root.setAttribute('data-font-scale', prefs.fontScale || 'standard');
+          var sysReduce =
+            window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          var rm =
+            prefs.reducedMotion === 'on' ||
+            ((!prefs.reducedMotion || prefs.reducedMotion === 'system') && sysReduce);
+          root.setAttribute('data-reduced-motion', rm ? 'true' : 'false');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>You need to enable JavaScript to run EPAMS.</noscript>
     <div id="root"></div>
   </body>
 </html>

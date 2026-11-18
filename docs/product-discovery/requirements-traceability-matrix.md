@@ -54,3 +54,19 @@ Manual / E2E Tests:          7 requirements covered via UI & Cypress / Postman
 Traceability Completeness:   100% (No orphan requirements; all mapped to user value)
 ```
 
+---
+
+## 4. P9.5 Enterprise UI/UX Transformation Traceability Addendum
+
+Added during **Phase P9.5 — Enterprise UI/UX Transformation** (post-Stage 2 MySQL verification, pre-P10 deployment). Preserves all P0–P9 backend business rules, Flyway `V1`–`V4`, JWT/CSRF/RBAC boundaries, and 11-state lifecycle invariants.
+
+| Gap / Req ID | UI/UX Capability | Linked Functional / NFR | Implementation Artifacts | Automated Verification | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`UX-001` / `UX-002`** | Design System Tokens & FOUC-Free Theme Engine (Light / Dark / System) | `NFR-010`, `NFR-011` | `src/styles/design-system/tokens.css`, `components.css`, `public/index.html`, `src/services/PreferencesContext.js` | `P95UiUxTransformation.test.js` (`P95-02`, `P95-03`) | **Verified** |
+| **`UX-003`** | Hardcoded Demo Credential Removal & Accessible Login Modal | `FR-001`, `NFR-006` | `src/components/LoginModal.js` | `P95UiUxTransformation.test.js` (`P95-01`), `P7FrontendIntegration.test.js` | **Verified** |
+| **`UX-004` / `UX-005`** | Enterprise Application Shell, Collapsible Sidebar, Mobile Drawer & `Ctrl+K` Quick Search | `FR-007`, `FR-010`, `NFR-010` | `AppLayout.js`, `Navbar.js`, `Sidebar.js`, `Breadcrumb.js`, `GlobalSearchModal.js` | `P95UiUxTransformation.test.js` (`P95-02`, `P95-04`) | **Verified** |
+| **`UX-006`** | Self-Service Employee Profile & Workspace Preferences (`/profile`, `/preferences`) | **`FR-008`**, `FR-009`, `NFR-010` | `src/components/profile/EmployeeProfile.js`, `PreferencesPage.js`, `Avatar.js` (`GET /api/profiles/me`) | `P95UiUxTransformation.test.js` (`P95-05`, `P95-06`) | **Verified** |
+| **`UX-007` / `UX-008`** | Employee Workspace Dashboard, Notifications Preview & Backend-Accurate KPIs | `FR-010`, `FR-011`, `FR-019` | `EmployeeDashboard.js`, `LoadingSkeleton.js`, `ToastContext.js` | `P95UiUxTransformation.test.js` (`P95-08`), `P7FrontendIntegration.test.js` | **Verified** |
+| **`UX-009` / `UX-010`** | Service Catalog, Create Ticket Modal, My Tickets Table/Card Switcher & 11-State `StatusTimeline` | `FR-010`, `FR-011`, `FR-012`, `FR-015` | `ServiceCatalog.js`, `CreateTicketModal.js`, `MyTickets.js`, `TicketDetail.js`, `StatusTimeline.js`, `TicketComments.js` | `P95UiUxTransformation.test.js` (`P95-07`), `P7FrontendIntegration.test.js` | **Verified** |
+| **`UX-011` / `UX-012`** | Resolver Department Queue, Manager Approval Queue, Analytics & Audit Ledger Modernization | `FR-013`, `FR-014`, `FR-016A/B`, `FR-017`, `FR-018` | `DepartmentQueue.js`, `ApprovalQueue.js`, `AnalyticsDashboard.js`, `AuditLedger.js` | `P7FrontendIntegration.test.js`, `P8FrontendNotificationsAnalytics.test.js`, `P95UiUxTransformation.test.js` | **Verified** |
+| **`UX-013` / `UX-014`** | WCAG 2.2 AA Semantics, Reduced Motion, Responsive Breakpoints & Live Visual Verification | `NFR-010`, `NFR-011` | `tokens.css`, `components.css`, `docs/ui-ux/accessibility-audit.md`, `responsive-design-verification.md`, `p95-1-live-browser-visual-acceptance-report.md` | Jest `42/42` + Build (`0` warnings) + Backend `208/208` + Live Chrome `157.0.8103.79` (`43` PNGs, `37` `axe-core 4.11.4` scans with `0` violations) | **Verified (`VIS-01` Approved)** |

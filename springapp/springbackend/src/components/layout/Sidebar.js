@@ -1,149 +1,183 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../services/AuthContext';
+import { usePreferences } from '../../services/PreferencesContext';
+import {
+  DashboardIcon,
+  CatalogIcon,
+  TicketIcon,
+  BellIcon,
+  ChartIcon,
+  ApprovalIcon,
+  QueueIcon,
+  ShieldIcon,
+  UsersIcon,
+  UserIcon,
+  SettingsIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  KeyIcon,
+  FileTextIcon,
+  LinkIcon
+} from '../common/Icons';
 
-const Sidebar = () => {
+const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
   const { isAuthenticated, isAdmin, isAuditor, isResolver, isApprover, canViewAnalytics, department } = useAuth();
+  const { sidebarCollapsed, toggleSidebarCollapsed } = usePreferences();
 
-  const getNavLinkStyle = ({ isActive }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '9px 14px',
-    borderRadius: '6px',
-    fontSize: '13px',
-    fontWeight: isActive ? 600 : 500,
-    color: isActive ? '#2563eb' : '#475569',
-    backgroundColor: isActive ? '#eff6ff' : 'transparent',
-    textDecoration: 'none',
-    transition: 'all 0.15s ease',
-    marginBottom: '2px'
-  });
+  const navClass = ({ isActive }) =>
+    `ep-nav-link ${isActive ? 'ep-nav-link--active' : ''}`;
 
-  return (
-    <aside
-      style={{
-        width: '230px',
-        backgroundColor: '#ffffff',
-        borderRight: '1px solid #e2e8f0',
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 'calc(100vh - 60px)',
-        padding: '16px 12px',
-        boxSizing: 'border-box'
+  const renderLink = (to, label, IconComp, end = false) => (
+    <NavLink
+      key={to}
+      to={to}
+      end={end}
+      className={navClass}
+      title={sidebarCollapsed ? label : undefined}
+      aria-label={sidebarCollapsed ? label : undefined}
+      onClick={() => {
+        if (mobileOpen && onCloseMobile) onCloseMobile();
       }}
     >
-      <div style={{ flex: 1 }}>
-        <div style={sectionHeadingStyle}>SERVICE MANAGEMENT</div>
-        <NavLink to="/" end style={getNavLinkStyle}>
-          <span>📊</span> Dashboard
-        </NavLink>
-        <NavLink to="/catalog" style={getNavLinkStyle}>
-          <span>📋</span> Service Catalog
-        </NavLink>
-        <NavLink to="/tickets" style={getNavLinkStyle}>
-          <span>🎫</span> My Tickets
-        </NavLink>
-        {isAuthenticated && (
-          <NavLink to="/notifications" style={getNavLinkStyle}>
-            <span>🔔</span> Notifications
-          </NavLink>
-        )}
+      <IconComp size={18} />
+      <span className="ep-nav-label">{label}</span>
+    </NavLink>
+  );
 
-        {canViewAnalytics && (
-          <>
-            <div style={{ ...sectionHeadingStyle, marginTop: '20px' }}>INSIGHTS</div>
-            <NavLink to="/analytics" style={getNavLinkStyle}>
-              <span>📊</span> Operational Analytics
-            </NavLink>
-          </>
-        )}
-
-        {isApprover && (
-          <>
-            <div style={{ ...sectionHeadingStyle, marginTop: '20px' }}>APPROVALS</div>
-            <NavLink to="/approvals" style={getNavLinkStyle}>
-              <span>✍️</span> Pending Approvals
-            </NavLink>
-          </>
-        )}
-
-        {isResolver && (
-          <>
-            <div style={{ ...sectionHeadingStyle, marginTop: '20px' }}>SPECIALIST QUEUE</div>
-            <NavLink
-              to={department ? `/queue/${department}` : '/queue/IT'}
-              style={getNavLinkStyle}
+  const renderContent = (isDrawer = false) => {
+    const collapsed = !isDrawer && sidebarCollapsed;
+    return (
+      <nav aria-label="Primary workspace navigation" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {isDrawer && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px 14px', borderBottom: '1px solid var(--ep-border)', marginBottom: '8px' }}>
+            <span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--ep-text-primary)' }}>EPAMS Navigation</span>
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="ep-btn ep-btn--ghost ep-btn--sm"
+              aria-label="Close navigation drawer"
             >
-              <span>📥</span> {department ? `${department} Queue` : 'Department Queue'}
-            </NavLink>
-          </>
+              &times;
+            </button>
+          </div>
         )}
 
-        {isAuditor && (
-          <>
-            <div style={{ ...sectionHeadingStyle, marginTop: '20px' }}>AUDIT & SECURITY</div>
-            <NavLink to="/audit-chain" style={getNavLinkStyle}>
-              <span>🔒</span> Cryptographic Ledger
-            </NavLink>
-          </>
-        )}
+        <div style={{ flex: 1 }}>
+          <div className="ep-nav-group-label">{collapsed ? 'WORK' : 'WORKSPACE'}</div>
+          {renderLink('/', 'Dashboard', DashboardIcon, true)}
+          {renderLink('/catalog', 'Service Catalog', CatalogIcon)}
+          {isAuthenticated && renderLink('/tickets', 'My Tickets', TicketIcon)}
+          {isAuthenticated && renderLink('/notifications', 'Notifications', BellIcon)}
 
-        {isAdmin && (
-          <>
-            <div style={{ ...sectionHeadingStyle, marginTop: '20px' }}>ADMINISTRATION</div>
-            <NavLink to="/admin/metrics" style={getNavLinkStyle}>
-              <span>📈</span> System Metrics
-            </NavLink>
-            <NavLink to="/users" style={getNavLinkStyle}>
-              <span>👥</span> Users
-            </NavLink>
-            <NavLink to="/roles" style={getNavLinkStyle}>
-              <span>🛡️</span> Roles
-            </NavLink>
-            <NavLink to="/profiles" style={getNavLinkStyle}>
-              <span>📇</span> Profiles
-            </NavLink>
-            <NavLink to="/user-role-mappings" style={getNavLinkStyle}>
-              <span>🔗</span> Role Mappings
-            </NavLink>
-            <NavLink to="/audit" style={getNavLinkStyle}>
-              <span>📜</span> Legacy Audit
-            </NavLink>
-          </>
-        )}
-      </div>
+          {canViewAnalytics && (
+            <>
+              <div className="ep-nav-group-label">{collapsed ? 'DATA' : 'INSIGHTS'}</div>
+              {renderLink('/analytics', 'Operational Analytics', ChartIcon)}
+            </>
+          )}
 
-      {!isAuthenticated && (
-        <div
-          style={{
-            padding: '12px',
-            backgroundColor: '#eff6ff',
-            borderRadius: '6px',
-            border: '1px solid #bfdbfe',
-            fontSize: '12px',
-            color: '#1e40af',
-            lineHeight: 1.4
-          }}
-        >
-          <strong>Guest Mode</strong>
-          <p style={{ margin: '4px 0 0', color: '#3b82f6' }}>
-            Please sign in to submit service tickets and track requests.
-          </p>
+          {isApprover && (
+            <>
+              <div className="ep-nav-group-label">{collapsed ? 'APPR' : 'APPROVALS'}</div>
+              {renderLink('/approvals', 'Pending Approvals', ApprovalIcon)}
+            </>
+          )}
+
+          {isResolver && (
+            <>
+              <div className="ep-nav-group-label">{collapsed ? 'DESK' : 'SPECIALIST QUEUE'}</div>
+              {renderLink(
+                department ? `/queue/${department}` : '/queue/IT',
+                department ? `${department} Queue` : 'Department Queue',
+                QueueIcon
+              )}
+            </>
+          )}
+
+          {isAuditor && (
+            <>
+              <div className="ep-nav-group-label">{collapsed ? 'AUDIT' : 'AUDIT & SECURITY'}</div>
+              {renderLink('/audit-chain', 'Cryptographic Ledger', ShieldIcon)}
+            </>
+          )}
+
+          {isAuthenticated && (
+            <>
+              <div className="ep-nav-group-label">{collapsed ? 'ME' : 'ACCOUNT'}</div>
+              {renderLink('/profile', 'My Profile', UserIcon)}
+              {renderLink('/preferences', 'Preferences', SettingsIcon)}
+            </>
+          )}
+
+          {isAdmin && (
+            <>
+              <div className="ep-nav-group-label">{collapsed ? 'ADM' : 'ADMINISTRATION'}</div>
+              {renderLink('/admin/metrics', 'System Metrics', ChartIcon)}
+              {renderLink('/users', 'Users', UsersIcon)}
+              {renderLink('/roles', 'Roles', KeyIcon)}
+              {renderLink('/profiles', 'Profiles', UserIcon)}
+              {renderLink('/user-role-mappings', 'Role Mappings', LinkIcon)}
+              {renderLink('/audit', 'Legacy Audit', FileTextIcon)}
+            </>
+          )}
         </div>
+
+        <div className="ep-sidebar-footer">
+          {!isAuthenticated && !collapsed && (
+            <div
+              style={{
+                padding: '10px 12px',
+                backgroundColor: 'var(--ep-info-bg)',
+                borderRadius: 'var(--ep-radius-sm)',
+                border: '1px solid var(--ep-info-border)',
+                fontSize: '12px',
+                color: 'var(--ep-info-text)',
+                lineHeight: 1.45,
+                marginBottom: '10px'
+              }}
+            >
+              <strong>Guest Preview</strong>
+              <p style={{ margin: '4px 0 0' }}>
+                Sign in to submit requests, track tickets, and manage your profile.
+              </p>
+            </div>
+          )}
+
+          {!isDrawer && (
+            <button
+              type="button"
+              onClick={toggleSidebarCollapsed}
+              className="ep-btn ep-btn--ghost"
+              style={{ width: '100%', justifyContent: collapsed ? 'center' : 'flex-start' }}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <ChevronRightIcon size={17} /> : <ChevronLeftIcon size={17} />}
+              {!collapsed && <span style={{ fontSize: '12px' }}>Collapse Sidebar</span>}
+            </button>
+          )}
+        </div>
+      </nav>
+    );
+  };
+
+  return (
+    <>
+      <aside className={`ep-sidebar ep-sidebar-desktop ${sidebarCollapsed ? 'ep-sidebar--collapsed' : ''}`}>
+        {renderContent(false)}
+      </aside>
+
+      {mobileOpen && (
+        <>
+          <div className="ep-drawer-backdrop" onClick={onCloseMobile} aria-hidden="true" />
+          <aside className="ep-sidebar ep-sidebar-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+            {renderContent(true)}
+          </aside>
+        </>
       )}
-    </aside>
+    </>
   );
 };
 
-const sectionHeadingStyle = {
-  fontSize: '11px',
-  fontWeight: 700,
-  color: '#94a3b8',
-  letterSpacing: '0.05em',
-  padding: '6px 14px',
-  marginBottom: '4px'
-};
-
 export default Sidebar;
-

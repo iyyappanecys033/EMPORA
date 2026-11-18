@@ -2,16 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import ticketService from '../../services/ticketService';
 import { useAuth } from '../../services/AuthContext';
-import LoadingSpinner from '../common/LoadingSpinner';
+import { useToast } from '../../services/ToastContext';
+import { TableSkeleton } from '../common/LoadingSkeleton';
 import EmptyState from '../common/EmptyState';
 import Alert from '../common/Alert';
+import { ApprovalIcon } from '../common/Icons';
 
 const ApprovalQueue = () => {
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTask, setActiveTask] = useState(null);
-  const [decisionType, setDecisionType] = useState('APPROVED'); // 'APPROVED' | 'REJECTED'
+  const [decisionType, setDecisionType] = useState('APPROVED');
   const [decisionNotes, setDecisionNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState(null);
@@ -33,6 +36,15 @@ const ApprovalQueue = () => {
     fetchTasks();
   }, [fetchTasks]);
 
+  useEffect(() => {
+    if (!activeTask) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !submitting) setActiveTask(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTask, submitting]);
+
   const handleOpenDecision = (task, type) => {
     setActiveTask(task);
     setDecisionType(type);
@@ -53,12 +65,18 @@ const ApprovalQueue = () => {
     setAlert(null);
     try {
       await ticketService.decideApproval(activeTask.id, decisionType, decisionNotes.trim());
+      const resolvedId = activeTask.id;
       setActiveTask(null);
       setDecisionNotes('');
+      showToast({
+        type: 'success',
+        title: 'Decision Recorded',
+        message: `Task #${resolvedId} marked as ${decisionType}.`
+      });
       setAlert({
         type: 'success',
         title: 'Decision Recorded',
-        detail: `Task #${activeTask.id} was successfully marked as ${decisionType}.`
+        detail: `Task #${resolvedId} was successfully marked as ${decisionType}.`
       });
       fetchTasks();
     } catch (err) {
@@ -70,13 +88,13 @@ const ApprovalQueue = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px', color: '#0f172a' }}>
-          Managerial Approval Queue
-        </h1>
-        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-          Review pending service requests submitted by direct reports and departmental teams.
-        </p>
+      <div className="ep-page-header">
+        <div>
+          <h1 className="ep-page-title">Approval Center</h1>
+          <p className="ep-page-subtitle">
+            Review pending service requests submitted by direct reports and departmental teams ({tasks.length} pending).
+          </p>
+        </div>
       </div>
 
       {alert && (
@@ -90,10 +108,10 @@ const ApprovalQueue = () => {
       )}
 
       {loading ? (
-        <LoadingSpinner message="Fetching pending approval tasks..." />
+        <TableSkeleton rows={3} />
       ) : tasks.length === 0 ? (
         <EmptyState
-          icon="✅"
+          icon={<ApprovalIcon size={26} />}
           title="No pending approvals"
           description="Your queue is clear! All assigned approval tasks have been resolved."
         />
@@ -104,52 +122,63 @@ const ApprovalQueue = () => {
             const isSelfRequest = requester && requester === currentUser?.username;
 
             return (
-              <div
+              <article
                 key={task.id}
+                className="ep-card"
                 style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '10px',
-                  border: isSelfRequest ? '1px solid #fecaca' : '1px solid #e2e8f0',
-                  padding: '20px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  borderColor: isSelfRequest ? 'var(--ep-danger-border)' : 'var(--ep-border)',
+                  borderLeft: `4px solid ${isSelfRequest ? 'var(--ep-danger)' : 'var(--ep-primary)'}`
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', backgroundColor: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>
-                        {task.approvalStage ? `STAGE ${task.approvalStage} ${task.approvalStage === 1 ? '(MANAGER)' : '(SECONDARY)'}` : task.stage || 'STAGE 1 (MANAGER)'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: 'var(--ep-selected-text)',
+                          backgroundColor: 'var(--ep-primary-subtle)',
+                          border: '1px solid var(--ep-primary-border)',
+                          padding: '2px 8px',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        {task.approvalStage
+                          ? `STAGE ${task.approvalStage} ${task.approvalStage === 1 ? '(MANAGER)' : '(SECONDARY)'}`
+                          : task.stage || 'STAGE 1 (MANAGER)'}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                      <span className="ep-tabular" style={{ fontSize: '12px', color: 'var(--ep-text-muted)' }}>
                         Task ID #{task.id}
                       </span>
                     </div>
 
-                    <h3 style={{ margin: '4px 0', fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+                    <h2 style={{ margin: '4px 0 0', fontSize: '17px', fontWeight: 700, color: 'var(--ep-text-primary)' }}>
                       Ticket #{task.ticketNumber || task.ticketId}
-                    </h3>
+                    </h2>
                   </div>
 
-                  {/* Anti-self-approval warning or Decision buttons */}
                   {isSelfRequest ? (
-                    <div style={{ padding: '6px 12px', backgroundColor: '#fef2f2', borderRadius: '6px', border: '1px solid #fecaca', color: '#b91c1c', fontSize: '12px', fontWeight: 600 }}>
+                    <div
+                      role="alert"
+                      style={{
+                        padding: '8px 12px',
+                        backgroundColor: 'var(--ep-danger-bg)',
+                        borderRadius: 'var(--ep-radius-sm)',
+                        border: '1px solid var(--ep-danger-border)',
+                        color: 'var(--ep-danger-text)',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                    >
                       ⚠️ Anti-Self-Approval: You cannot approve your own request.
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         onClick={() => handleOpenDecision(task, 'APPROVED')}
-                        style={{
-                          padding: '7px 16px',
-                          borderRadius: '6px',
-                          border: 'none',
-                          backgroundColor: '#16a34a',
-                          color: '#fff',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: 'pointer'
-                        }}
+                        className="ep-btn ep-btn--success ep-btn--sm"
                       >
                         ✓ Approve
                       </button>
@@ -157,16 +186,7 @@ const ApprovalQueue = () => {
                       <button
                         type="button"
                         onClick={() => handleOpenDecision(task, 'REJECTED')}
-                        style={{
-                          padding: '7px 16px',
-                          borderRadius: '6px',
-                          border: '1px solid #dc2626',
-                          backgroundColor: '#fff',
-                          color: '#dc2626',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: 'pointer'
-                        }}
+                        className="ep-btn ep-btn--danger-outline ep-btn--sm"
                       >
                         ✕ Reject
                       </button>
@@ -174,125 +194,115 @@ const ApprovalQueue = () => {
                   )}
                 </div>
 
-                {/* Task Details */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '6px', fontSize: '13px' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '12px',
+                    backgroundColor: 'var(--ep-bg-subtle)',
+                    border: '1px solid var(--ep-border-subtle)',
+                    padding: '12px 14px',
+                    borderRadius: 'var(--ep-radius-sm)',
+                    fontSize: '13px'
+                  }}
+                >
                   <div>
-                    <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Requester</span>
-                    <strong>👤 {task.requesterUsername || task.ticketRequester || 'Unknown'}</strong>
+                    <span style={{ color: 'var(--ep-text-muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Requester</span>
+                    <strong style={{ color: 'var(--ep-text-primary)' }}>👤 {requester || 'Unknown'}</strong>
                   </div>
 
                   <div>
-                    <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Assigned Approver</span>
-                    <strong>👔 {task.approverUsername || currentUser?.username}</strong>
+                    <span style={{ color: 'var(--ep-text-muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Assigned Approver</span>
+                    <strong style={{ color: 'var(--ep-text-primary)' }}>{task.approverUsername || currentUser?.username}</strong>
                   </div>
 
                   <div>
-                    <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Created At</span>
-                    <span>{task.createdAt ? new Date(task.createdAt).toLocaleString() : 'N/A'}</span>
+                    <span style={{ color: 'var(--ep-text-muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Created At</span>
+                    <span className="ep-tabular" style={{ color: 'var(--ep-text-secondary)' }}>
+                      {task.createdAt ? new Date(task.createdAt).toLocaleString() : 'N/A'}
+                    </span>
                   </div>
 
                   <div>
-                    <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Ticket Link</span>
-                    <Link to={`/tickets/${task.ticketId}`} style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'none' }}>
+                    <span style={{ color: 'var(--ep-text-muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Ticket Context</span>
+                    <Link to={`/tickets/${task.ticketId}`} style={{ color: 'var(--ep-primary)', fontWeight: 600, textDecoration: 'none' }}>
                       Inspect Full Ticket &rarr;
                     </Link>
                   </div>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
       )}
 
-      {/* Decision Modal */}
       {activeTask && (
-        <div style={modalOverlayStyle}>
-          <div style={modalContentStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a' }}>
+        <div
+          className="ep-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="approval-decision-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !submitting) setActiveTask(null);
+          }}
+        >
+          <div className="ep-modal" style={{ maxWidth: '520px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 id="approval-decision-modal-title" style={{ margin: 0, fontSize: '17px', fontWeight: 700 }}>
                 {decisionType === 'APPROVED' ? 'Approve Service Request' : 'Reject Service Request'}
               </h3>
               <button
                 type="button"
                 onClick={() => setActiveTask(null)}
-                style={{ background: 'transparent', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}
+                disabled={submitting}
+                aria-label="Close approval modal"
+                className="ep-btn ep-btn--ghost ep-btn--sm"
               >
                 &times;
               </button>
             </div>
 
-            <p style={{ fontSize: '13px', color: '#475569', margin: '0 0 14px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--ep-text-muted)', margin: '0 0 14px' }}>
               {decisionType === 'APPROVED'
-                ? 'Confirming approval for Ticket #' + (activeTask.ticketNumber || activeTask.ticketId) + '. You may add optional justification notes.'
-                : 'Please state the explicit business reason for rejecting Ticket #' + (activeTask.ticketNumber || activeTask.ticketId) + ' (min 15 characters).'}
+                ? `Confirming approval for Ticket #${activeTask.ticketNumber || activeTask.ticketId}. You may add optional justification notes.`
+                : `State the explicit business reason for rejecting Ticket #${activeTask.ticketNumber || activeTask.ticketId} (minimum 15 characters).`}
             </p>
 
             <form onSubmit={handleDecisionSubmit}>
+              <label htmlFor="approval-decision-notes" className="ep-label">
+                {decisionType === 'APPROVED' ? 'Approval Notes (Optional)' : 'Rejection Reason *'}
+              </label>
               <textarea
+                id="approval-decision-notes"
                 rows={4}
                 value={decisionNotes}
                 onChange={(e) => setDecisionNotes(e.target.value)}
-                placeholder={decisionType === 'APPROVED' ? 'Optional approval notes...' : 'State business justification for rejection (e.g. Budgetary constraint, redundant item)...'}
+                placeholder={
+                  decisionType === 'APPROVED'
+                    ? 'Optional approval notes...'
+                    : 'State business justification for rejection (e.g. Budgetary constraint, redundant item)...'
+                }
                 required={decisionType === 'REJECTED'}
                 maxLength={1000}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '13px',
-                  boxSizing: 'border-box'
-                }}
+                className="ep-textarea"
               />
-              <div style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'right', marginTop: '2px' }}>
-                {decisionNotes.length} / 1000 characters
+              <div style={{ fontSize: '11px', color: 'var(--ep-text-muted)', textAlign: 'right', marginTop: '4px' }}>
+                <span className="ep-tabular">{decisionNotes.length} / 1000 characters</span>
                 {decisionType === 'REJECTED' && decisionNotes.length < 15 && (
-                  <span style={{ color: '#dc2626', marginLeft: '6px' }}>
+                  <span style={{ color: 'var(--ep-danger-text)', marginLeft: '8px', fontWeight: 600 }}>
                     (Min 15 chars required: {15 - decisionNotes.length} remaining)
                   </span>
                 )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-                <button
-                  type="button"
-                  onClick={() => setActiveTask(null)}
-                  disabled={submitting}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#fff',
-                    color: '#475569',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
+                <button type="button" onClick={() => setActiveTask(null)} disabled={submitting} className="ep-btn ep-btn--secondary">
                   Cancel
                 </button>
-
                 <button
                   type="submit"
                   disabled={submitting || (decisionType === 'REJECTED' && decisionNotes.trim().length < 15)}
-                  style={{
-                    padding: '8px 18px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    backgroundColor:
-                      submitting || (decisionType === 'REJECTED' && decisionNotes.trim().length < 15)
-                        ? '#93c5fd'
-                        : decisionType === 'APPROVED'
-                        ? '#16a34a'
-                        : '#dc2626',
-                    color: '#fff',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor:
-                      submitting || (decisionType === 'REJECTED' && decisionNotes.trim().length < 15)
-                        ? 'not-allowed'
-                        : 'pointer'
-                  }}
+                  className={`ep-btn ${decisionType === 'APPROVED' ? 'ep-btn--success' : 'ep-btn--danger'}`}
                 >
                   {submitting ? 'Submitting...' : decisionType === 'APPROVED' ? 'Confirm Approval' : 'Confirm Rejection'}
                 </button>
@@ -305,28 +315,4 @@ const ApprovalQueue = () => {
   );
 };
 
-const modalOverlayStyle = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(15, 23, 42, 0.6)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 100,
-  padding: '16px'
-};
-
-const modalContentStyle = {
-  backgroundColor: '#fff',
-  borderRadius: '10px',
-  width: '100%',
-  maxWidth: '520px',
-  padding: '24px',
-  boxSizing: 'border-box'
-};
-
 export default ApprovalQueue;
-
