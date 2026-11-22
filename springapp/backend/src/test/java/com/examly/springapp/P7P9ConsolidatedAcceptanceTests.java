@@ -416,7 +416,7 @@ public class P7P9ConsolidatedAcceptanceTests {
                 assertFalse(notificationEventListener.dispatchNotification(evt), "Duplicate dedupKey must be suppressed");
 
                 assertEquals(1, capturedPayloads.size(), "Exactly 1 email must be delivered across duplicate event retries");
-                assertTrue(capturedPayloads.get(0).contains("Subject: [EPAMS] Ticket Resolved: TKT-2026-SMTP1"));
+                assertTrue(capturedPayloads.get(0).contains("Subject: [EMPORA] Ticket Resolved: TKT-2026-SMTP1"));
                 assertTrue(capturedPayloads.get(0).contains("To: acc_emp_alice@epams.local"));
 
                 // 2. Simulate SMTP outage (closed port) -> in-app notification MUST STILL PERSIST cleanly!

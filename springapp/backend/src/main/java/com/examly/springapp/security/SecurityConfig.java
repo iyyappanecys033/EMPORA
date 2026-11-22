@@ -174,9 +174,24 @@ public class SecurityConfig {
                     "/static/**",
                     "/*.ico",
                     "/*.png",
-                    "/*.json"
+                    "/*.json",
+                    "/catalog",
+                    "/tickets", "/tickets/**",
+                    "/approvals",
+                    "/queue", "/queue/**",
+                    "/audit-chain",
+                    "/notifications", "/notifications/**",
+                    "/analytics", "/analytics/**",
+                    "/profile",
+                    "/preferences",
+                    "/admin/metrics",
+                    "/users", "/users/**",
+                    "/roles", "/roles/**",
+                    "/profiles", "/profiles/**",
+                    "/user-role-mappings", "/user-role-mappings/**",
+                    "/audit", "/audit/**"
                 ).permitAll()
-                // Strictly Gated Enterprise Portal (Option 2): All business resources require authentication
+                // Strictly Gated Enterprise Portal (Option 2): All business resources and APIs require authentication
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

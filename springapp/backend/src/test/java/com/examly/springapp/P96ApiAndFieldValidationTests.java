@@ -145,7 +145,7 @@ class P96ApiAndFieldValidationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{broken-json"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("https://epams.internal/errors/malformed-json"))
+                .andExpect(jsonPath("$.type").value("https://empora.internal/errors/malformed-json"))
                 .andExpect(content().string(not(containsString("org.springframework"))));
 
         // Wrong Content-Type -> 415 Unsupported Media Type (QA-DEF-004 regression)

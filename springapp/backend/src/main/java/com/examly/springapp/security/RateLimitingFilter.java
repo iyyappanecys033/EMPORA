@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * - /api/auth/register
  * - /api/auth/refresh
  * 
- * Enforces a strict threshold of max 15 requests per 60-second window per remote IP.
+ * Enforces a strict threshold of requests per 60-second window per remote IP.
  * Violations immediately return HTTP 429 Too Many Requests with RFC 7807 payload
  * and a standard Retry-After header.
  */
@@ -36,14 +37,39 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
 
-    private static final int MAX_REQUESTS_PER_WINDOW = 15;
     private static final long WINDOW_DURATION_SECONDS = 60L;
 
-    private static final class ClientBucket {
+    @Value("${empora.security.rate-limit.enabled:true}")
+    private boolean enabled = true;
+
+    @Value("${empora.security.rate-limit.max-requests:15}")
+    private int maxRequestsPerWindow = 15;
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setMaxRequestsPerWindow(int maxRequestsPerWindow) {
+        this.maxRequestsPerWindow = maxRequestsPerWindow;
+    }
+
+    public int getMaxRequestsPerWindow() {
+        return maxRequestsPerWindow;
+    }
+
+    public void clear() {
+        buckets.clear();
+    }
+
+    static final class ClientBucket {
         private final AtomicInteger requestCount = new AtomicInteger(0);
         private volatile long windowStartTimeEpoch = Instant.now().getEpochSecond();
 
-        public boolean tryConsume() {
+        public boolean tryConsume(int maxRequests) {
             long currentEpoch = Instant.now().getEpochSecond();
             if (currentEpoch - windowStartTimeEpoch >= WINDOW_DURATION_SECONDS) {
                 synchronized (this) {
@@ -53,7 +79,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     }
                 }
             }
-            return requestCount.incrementAndGet() <= MAX_REQUESTS_PER_WINDOW;
+            return requestCount.incrementAndGet() <= maxRequests;
         }
 
         public long getRetryAfterSeconds() {
@@ -61,12 +87,19 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             long elapsed = currentEpoch - windowStartTimeEpoch;
             return Math.max(1, WINDOW_DURATION_SECONDS - elapsed);
         }
+
+        public int getCurrentCount() {
+            return requestCount.get();
+        }
     }
 
     private final Map<String, ClientBucket> buckets = new ConcurrentHashMap<>();
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        if (!enabled) {
+            return true;
+        }
         String path = request.getRequestURI();
         // Rate limit strictly authentication mutation endpoints
         if (request.getMethod().equalsIgnoreCase("POST")) {
@@ -84,7 +117,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String clientIp = extractClientIp(request);
         ClientBucket bucket = buckets.computeIfAbsent(clientIp, k -> new ClientBucket());
 
-        if (!bucket.tryConsume()) {
+        if (!bucket.tryConsume(maxRequestsPerWindow)) {
             long retryAfter = bucket.getRetryAfterSeconds();
             log.warn("[A06: Insecure Design] Rate limit exceeded for IP: {} on URI: {}. Rejected with 429.",
                     LogSanitizer.sanitize(clientIp), LogSanitizer.sanitize(request.getRequestURI()));

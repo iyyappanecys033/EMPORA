@@ -1,0 +1,58 @@
+name: EMPORA Pre-Deploy Verification Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-test-gate:
+    name: Backend Unit & Integration Tests (Java 25 + Spring Boot 3)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Run Backend Test Suite
+        working-directory: springapp/backend
+        run: mvn test -B -Dfrontend.skip=true -XX:+EnableDynamicAgentLoading
+
+  frontend-build-and-test-gate:
+    name: Frontend Jest Tests & Production Build (React 18 + Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: springapp/frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: springapp/frontend
+        run: npm ci
+
+      - name: Run Frontend Tests
+        working-directory: springapp/frontend
+        env:
+          CI: 'true'
+        run: npm test -- --watchAll=false --passWithNoTests
+
+      - name: Build React Production Artifact
+        working-directory: springapp/frontend
+        env:
+          CI: 'true'
+        run: npm run build

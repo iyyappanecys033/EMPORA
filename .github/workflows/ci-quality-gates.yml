@@ -1,4 +1,4 @@
-name: EPAMS CI Quality Gates
+name: EMPORA CI Quality Gates
 
 on:
   push:
@@ -25,15 +25,15 @@ jobs:
           cache: maven
 
       - name: Run Backend Tests & JaCoCo Coverage Report
-        working-directory: springapp
-        run: mvn test -B -Dskip.npm=true -Pcoverage
+        working-directory: springapp/backend
+        run: mvn test -B -Dfrontend.skip=true -Pcoverage
 
       - name: Upload JaCoCo Coverage Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: jacoco-coverage-report
-          path: springapp/target/site/jacoco/
+          path: springapp/backend/target/site/jacoco/
 
   frontend-test-build-audit:
     name: Frontend Jest, Production Build & Dependency Audit
@@ -46,26 +46,26 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: springapp/springbackend/package-lock.json
+          cache-dependency-path: springapp/frontend/package-lock.json
 
       - name: Install Frontend Dependencies
-        working-directory: springapp/springbackend
+        working-directory: springapp/frontend
         run: npm ci
 
       - name: Run Frontend Jest Suite with Coverage
-        working-directory: springapp/springbackend
+        working-directory: springapp/frontend
         env:
           CI: 'true'
         run: npm test -- --watchAll=false --coverage --coverageReporters=text-summary --coverageReporters=lcov
 
       - name: Build React Production Bundle
-        working-directory: springapp/springbackend
+        working-directory: springapp/frontend
         env:
           CI: 'true'
         run: npm run build
 
       - name: Run npm Dependency Audit (Report Mode)
-        working-directory: springapp/springbackend
+        working-directory: springapp/frontend
         continue-on-error: true
         run: npm audit --audit-level=high
 
@@ -74,7 +74,7 @@ jobs:
         if: always()
         with:
           name: frontend-jest-coverage
-          path: springapp/springbackend/coverage/
+          path: springapp/frontend/coverage/
 
   mysql8-integration-gate:
     name: Real MySQL 8 Integration & Migration Gate
@@ -83,10 +83,10 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'epams_ci_ephemeral_root' }}
-          MYSQL_DATABASE: epams_ci_test
-          MYSQL_USER: epams_ci
-          MYSQL_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'epams_ci_ephemeral_pass' }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'empora_ci_ephemeral_root' }}
+          MYSQL_DATABASE: empora_ci_test
+          MYSQL_USER: empora_ci
+          MYSQL_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'empora_ci_ephemeral_pass' }}
         ports:
           - 3306:3306
         options: >-
@@ -106,33 +106,33 @@ jobs:
 
       - name: Provision Least-Privilege MySQL 8 Databases & Accounts
         env:
-          MYSQL_PWD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'epams_ci_ephemeral_root' }}
-          MIG_PASS: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'epams_ci_migrator_pass' }}
-          APP_PASS: ${{ secrets.CI_MYSQL_PASSWORD || 'epams_ci_ephemeral_pass' }}
+          MYSQL_PWD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'empora_ci_ephemeral_root' }}
+          MIG_PASS: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'empora_ci_migrator_pass' }}
+          APP_PASS: ${{ secrets.CI_MYSQL_PASSWORD || 'empora_ci_ephemeral_pass' }}
         run: |
           mysql -h 127.0.0.1 -P 3306 -u root <<SQL
-          CREATE DATABASE IF NOT EXISTS epams_ci_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-          CREATE DATABASE IF NOT EXISTS epams_stage2_brownfield CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-          CREATE USER IF NOT EXISTS 'epams_migrator'@'127.0.0.1' IDENTIFIED BY '${MIG_PASS}';
-          CREATE USER IF NOT EXISTS 'epams_app'@'127.0.0.1' IDENTIFIED BY '${APP_PASS}';
-          GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, REFERENCES, INDEX, ALTER ON epams_ci_test.* TO 'epams_migrator'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, REFERENCES, INDEX, ALTER ON epams_stage2_brownfield.* TO 'epams_migrator'@'127.0.0.1';
+          CREATE DATABASE IF NOT EXISTS empora_ci_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE DATABASE IF NOT EXISTS empora_stage2_brownfield CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'empora_migrator'@'127.0.0.1' IDENTIFIED BY '${MIG_PASS}';
+          CREATE USER IF NOT EXISTS 'empora_app'@'127.0.0.1' IDENTIFIED BY '${APP_PASS}';
+          GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, REFERENCES, INDEX, ALTER ON empora_ci_test.* TO 'empora_migrator'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, REFERENCES, INDEX, ALTER ON empora_stage2_brownfield.* TO 'empora_migrator'@'127.0.0.1';
           FLUSH PRIVILEGES;
           SQL
 
       - name: Apply Flyway V1-V4 via Migrator Account & Grant Least-Privilege App Role
-        working-directory: springapp
+        working-directory: springapp/backend
         env:
           DB_HOST: '127.0.0.1'
           DB_PORT: '3306'
-          DB_NAME: epams_ci_test
-          DB_USERNAME: epams_migrator
-          DB_PASSWORD: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'epams_ci_migrator_pass' }}
+          DB_NAME: empora_ci_test
+          DB_USERNAME: empora_migrator
+          DB_PASSWORD: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'empora_ci_migrator_pass' }}
           JWT_SECRET: ${{ secrets.CI_JWT_SECRET || 'RXBhbXNDSS1FcGhlbWVyYWwtSldULVNlY3JldC0yNTZCaXRLZXktMjAyNg==' }}
           COOKIE_SECURE: 'false'
-          MYSQL_PWD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'epams_ci_ephemeral_root' }}
+          MYSQL_PWD: ${{ secrets.CI_MYSQL_ROOT_PASSWORD || 'empora_ci_ephemeral_root' }}
         run: |
-          mvn package -B -DskipTests -Dskip.npm=true
+          mvn package -B -DskipTests -Dfrontend.skip=true
           java -jar target/springapp-0.0.1-SNAPSHOT.jar --spring.profiles.active=mysql --server.port=18099 &
           BOOT_PID=$!
           for i in $(seq 1 40); do
@@ -141,38 +141,38 @@ jobs:
           done
           kill $BOOT_PID || true
           mysql -h 127.0.0.1 -P 3306 -u root <<'SQL'
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.user_account TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.role TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.user_role_mapping TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.profile TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.refresh_token TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.account_status_log TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.service_catalog TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.service_ticket TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.ticket_comment TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.approval_task TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT, UPDATE, DELETE ON epams_ci_test.in_app_alert TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, INSERT ON epams_ci_test.audit_log TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT, UPDATE ON epams_ci_test.audit_chain_head TO 'epams_app'@'127.0.0.1';
-          GRANT SELECT ON epams_ci_test.flyway_schema_history TO 'epams_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.user_account TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.role TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.user_role_mapping TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.profile TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.refresh_token TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.account_status_log TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.service_catalog TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.service_ticket TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.ticket_comment TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.approval_task TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT, UPDATE, DELETE ON empora_ci_test.in_app_alert TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, INSERT ON empora_ci_test.audit_log TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT, UPDATE ON empora_ci_test.audit_chain_head TO 'empora_app'@'127.0.0.1';
+          GRANT SELECT ON empora_ci_test.flyway_schema_history TO 'empora_app'@'127.0.0.1';
           FLUSH PRIVILEGES;
           SQL
 
-      - name: Run Real MySQL 8 Integration Suite (Least-Privilege epams_app)
-        working-directory: springapp
+      - name: Run Real MySQL 8 Integration Suite (Least-Privilege empora_app)
+        working-directory: springapp/backend
         env:
-          EPAMS_MYSQL_INTEGRATION: 'true'
+          EMPORA_MYSQL_INTEGRATION: 'true'
           DB_HOST: '127.0.0.1'
           DB_PORT: '3306'
-          DB_NAME: epams_ci_test
-          DB_USERNAME: epams_app
-          DB_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'epams_ci_ephemeral_pass' }}
-          EPAMS_BROWNFIELD_DB: epams_stage2_brownfield
-          EPAMS_MIGRATOR_USERNAME: epams_migrator
-          EPAMS_MIGRATOR_PASSWORD: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'epams_ci_migrator_pass' }}
+          DB_NAME: empora_ci_test
+          DB_USERNAME: empora_app
+          DB_PASSWORD: ${{ secrets.CI_MYSQL_PASSWORD || 'empora_ci_ephemeral_pass' }}
+          EMPORA_BROWNFIELD_DB: empora_stage2_brownfield
+          EMPORA_MIGRATOR_USERNAME: empora_migrator
+          EMPORA_MIGRATOR_PASSWORD: ${{ secrets.CI_MYSQL_MIGRATOR_PASSWORD || 'empora_ci_migrator_pass' }}
           JWT_SECRET: ${{ secrets.CI_JWT_SECRET || 'RXBhbXNDSS1FcGhlbWVyYWwtSldULVNlY3JldC0yNTZCaXRLZXktMjAyNg==' }}
           COOKIE_SECURE: 'false'
-        run: mvn test -B -Dskip.npm=true -Dtest=Stage2RealMysqlIntegrationTests
+        run: mvn test -B -Dfrontend.skip=true -Dtest=Stage2RealMysqlIntegrationTests
 
   playwright-e2e-accessibility-gate:
     name: Playwright E2E & Accessibility Gate
@@ -193,26 +193,26 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: springapp/springbackend/package-lock.json
+          cache-dependency-path: springapp/frontend/package-lock.json
 
-      - name: Build Packaged EPAMS JAR
-        working-directory: springapp
-        run: mvn package -B -DskipTests
+      - name: Build Packaged EMPORA JAR
+        working-directory: springapp/backend
+        run: mvn package -B -DskipTests -Dfrontend.skip=true
 
       - name: Install Playwright Chromium & Run E2E
-        working-directory: springapp/springbackend
+        working-directory: springapp/frontend
         run: |
           npm ci
           npx --yes @playwright/test install --with-deps chromium
-          java -jar ../target/springapp-0.0.1-SNAPSHOT.jar \
+          java -jar ../backend/target/springapp-0.0.1-SNAPSHOT.jar \
             --server.port=8080 \
-            "--spring.datasource.url=jdbc:h2:mem:epams_ci_e2e;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1" \
+            "--spring.datasource.url=jdbc:h2:mem:empora_ci_e2e;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1" \
             --spring.jpa.hibernate.ddl-auto=validate &
           SERVER_PID=$!
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:8080/api/v1/health && break
             sleep 2
           done
-          EPAMS_BASE_URL=http://127.0.0.1:8080 npx --yes @playwright/test test || STATUS=$?
+          EMPORA_BASE_URL=http://127.0.0.1:8080 npx --yes @playwright/test test || STATUS=$?
           kill $SERVER_PID || true
           exit ${STATUS:-0}

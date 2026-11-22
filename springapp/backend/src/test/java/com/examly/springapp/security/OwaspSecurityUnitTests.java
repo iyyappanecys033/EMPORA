@@ -2,6 +2,9 @@ package com.examly.springapp.security;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockFilterChain;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -69,5 +72,33 @@ public class OwaspSecurityUnitTests {
         String phoneNumber = "9876543210";
         String maskedPhone = LogSanitizer.maskPii(phoneNumber);
         assertEquals("98******10", maskedPhone);
+    }
+
+    @Test
+    @DisplayName("[A06: Insecure Design] RateLimitingFilter rejects excessive requests beyond threshold with 429 and Retry-After header")
+    void testRateLimitingFilterEnforcement() throws Exception {
+        RateLimitingFilter filter = new RateLimitingFilter();
+        filter.setEnabled(true);
+        filter.setMaxRequestsPerWindow(3); // Set limit to 3 for unit test
+        filter.clear();
+
+        // 3 requests allowed
+        for (int i = 0; i < 3; i++) {
+            MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/login");
+            request.setRemoteAddr("192.168.1.100");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(request, response, new MockFilterChain());
+            assertEquals(200, response.getStatus(), "Request " + (i + 1) + " should be allowed through");
+        }
+
+        // 4th request must be rejected with 429
+        MockHttpServletRequest excessiveRequest = new MockHttpServletRequest("POST", "/api/auth/login");
+        excessiveRequest.setRemoteAddr("192.168.1.100");
+        MockHttpServletResponse rejectedResponse = new MockHttpServletResponse();
+        filter.doFilter(excessiveRequest, rejectedResponse, new MockFilterChain());
+
+        assertEquals(429, rejectedResponse.getStatus(), "Excessive request must be rejected with HTTP 429");
+        assertNotNull(rejectedResponse.getHeader("Retry-After"), "Response must include Retry-After header");
+        assertTrue(rejectedResponse.getContentAsString().contains("rate-limit-exceeded"), "Body must contain RFC 7807 problem details");
     }
 }
