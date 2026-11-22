@@ -634,7 +634,8 @@ a {
   position: fixed;
   inset: 0;
   background: var(--ep-overlay);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -655,6 +656,35 @@ a {
   padding: 24px;
   box-shadow: var(--ep-shadow-lg);
   animation: ep-scale-in var(--ep-duration-normal) var(--ep-ease);
+}
+
+.ep-auth-modal {
+  background: var(--ep-bg-elevated);
+  border: 1px solid var(--ep-border);
+  border-radius: 18px;
+  box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.35),
+              0 0 0 1px rgba(99, 102, 241, 0.15),
+              0 0 35px -10px rgba(99, 102, 241, 0.2);
+  animation: ep-auth-modal-pop 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+[data-theme='dark'] .ep-auth-modal {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 30px 70px -12px rgba(0, 0, 0, 0.65),
+              0 0 0 1px rgba(129, 140, 248, 0.25),
+              0 0 45px -10px rgba(99, 102, 241, 0.35);
+}
+
+@keyframes ep-auth-modal-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .ep-dropdown {

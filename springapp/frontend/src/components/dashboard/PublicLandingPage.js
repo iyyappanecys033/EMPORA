@@ -214,7 +214,7 @@ const PublicLandingPage = ({ onOpenLogin }) => {
               fontWeight: 700,
               letterSpacing: '0.05em',
               textTransform: 'uppercase',
-              marginBottom: '22px',
+              marginBottom: '24px',
               backdropFilter: 'blur(10px)',
               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
             }}
@@ -471,24 +471,24 @@ const PublicLandingPage = ({ onOpenLogin }) => {
       </nav>
 
       {/* 3. TRUST & PERFORMANCE METRICS */}
-      <section style={{ margin: '36px 0 54px' }} aria-label="Enterprise platform metrics">
+      <section style={{ margin: '32px 0 48px' }} aria-label="Enterprise platform metrics">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '20px 24px' }}>
+          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '24px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ep-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Platform SLA</span>
             <span className="ep-tabular" style={{ fontSize: '32px', fontWeight: 800, color: 'var(--ep-primary)', margin: '6px 0 2px' }}>99.98%</span>
             <span style={{ fontSize: '12.5px', color: 'var(--ep-text-secondary)' }}>Uptime with automated failover</span>
           </div>
-          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '20px 24px' }}>
+          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '24px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ep-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mean Time to Resolve</span>
             <span className="ep-tabular" style={{ fontSize: '32px', fontWeight: 800, color: 'var(--ep-success)', margin: '6px 0 2px' }}>&lt; 4.2h</span>
             <span style={{ fontSize: '12.5px', color: 'var(--ep-text-secondary)' }}>Standard IT &amp; HR requests</span>
           </div>
-          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '20px 24px' }}>
+          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '24px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ep-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role Boundaries</span>
             <span className="ep-tabular" style={{ fontSize: '32px', fontWeight: 800, color: 'var(--ep-secondary)', margin: '6px 0 2px' }}>11 Roles</span>
             <span style={{ fontSize: '12.5px', color: 'var(--ep-text-secondary)' }}>Fine-grained RBAC permissions</span>
           </div>
-          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '20px 24px' }}>
+          <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '24px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ep-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Audit Integrity</span>
             <span className="ep-tabular" style={{ fontSize: '32px', fontWeight: 800, color: 'var(--ep-warning)', margin: '6px 0 2px' }}>100% SHA256</span>
             <span style={{ fontSize: '12.5px', color: 'var(--ep-text-secondary)' }}>Chained tamper-evident events</span>
@@ -498,7 +498,7 @@ const PublicLandingPage = ({ onOpenLogin }) => {
 
       {/* 4. SIX-CARD CAPABILITIES GRID WITH HIGH-HOVER ELEVATION & SHIMMER */}
       <section id="features" style={{ marginBottom: '64px' }} aria-labelledby="features-heading">
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <h2 id="features-heading" style={{ fontSize: 'clamp(1.6rem, 2.8vw, 2.2rem)', fontWeight: 800, margin: '0 0 10px', color: 'var(--ep-text-primary)' }}>
             Enterprise Operations, Connected and Unified
           </h2>
@@ -507,7 +507,7 @@ const PublicLandingPage = ({ onOpenLogin }) => {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '22px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '24px' }}>
           {[
             {
               icon: CatalogIcon,
@@ -637,7 +637,7 @@ const PublicLandingPage = ({ onOpenLogin }) => {
 
         {/* Role Active View Card */}
         {rolesData[activeRole] && (
-          <div className="ep-card ep-landing-card-glow" style={{ padding: '34px', borderLeft: '5px solid var(--ep-primary)' }}>
+          <div className="ep-card ep-landing-card-glow" style={{ padding: '32px', borderLeft: '4px solid var(--ep-primary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
               <div>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ep-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -647,16 +647,16 @@ const PublicLandingPage = ({ onOpenLogin }) => {
                   {rolesData[activeRole].title}
                 </h3>
               </div>
-              <span style={{ fontSize: '12px', fontWeight: 600, padding: '5px 14px', borderRadius: '9999px', background: 'var(--ep-bg-subtle)', color: 'var(--ep-text-secondary)', border: '1px solid var(--ep-border)' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, padding: '6px 16px', borderRadius: '9999px', background: 'var(--ep-bg-subtle)', color: 'var(--ep-text-secondary)', border: '1px solid var(--ep-border)' }}>
                 Granular RBAC Enforced
               </span>
             </div>
 
-            <p style={{ fontSize: '15px', color: 'var(--ep-text-secondary)', lineHeight: 1.6, marginBottom: '22px' }}>
+            <p style={{ fontSize: '15px', color: 'var(--ep-text-secondary)', lineHeight: 1.6, marginBottom: '24px' }}>
               {rolesData[activeRole].summary}
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '24px' }}>
               {rolesData[activeRole].responsibilities.map((resp, idx) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '14px', color: 'var(--ep-text-primary)' }}>
                   <CheckCircleIcon size={17} style={{ color: 'var(--ep-success)', marginTop: '2px', flexShrink: 0 }} />
@@ -841,7 +841,7 @@ const PublicLandingPage = ({ onOpenLogin }) => {
         style={{
           background: 'linear-gradient(135deg, var(--ep-primary) 0%, #1e1b4b 60%, #0f172a 100%)',
           color: '#ffffff',
-          padding: '48px 36px',
+          padding: '48px 32px',
           textAlign: 'center',
           borderRadius: '20px',
           marginBottom: '32px',
@@ -849,14 +849,14 @@ const PublicLandingPage = ({ onOpenLogin }) => {
         }}
       >
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(1.7rem, 3.2vw, 2.4rem)', fontWeight: 800, margin: '0 0 14px' }}>
+          <h2 style={{ fontSize: 'clamp(1.7rem, 3.2vw, 2.4rem)', fontWeight: 800, margin: '0 0 16px' }}>
             Ready to Connect Your Enterprise Operations?
           </h2>
-          <p style={{ fontSize: '15.5px', color: 'rgba(255, 255, 255, 0.9)', margin: '0 auto 30px', lineHeight: 1.65 }}>
+          <p style={{ fontSize: '15.5px', color: 'rgba(255, 255, 255, 0.9)', margin: '0 auto 32px', lineHeight: 1.65 }}>
             Join enterprise requesters, managers, and fulfillment specialists using EMPORA for unified, compliant, and cryptographically verified workflow execution.
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
             {onOpenLogin && (
               <button
                 type="button"
