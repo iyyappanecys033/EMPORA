@@ -18,6 +18,8 @@ replay_pid*
 # Node.js / React Dependencies & Build Artifacts
 node_modules/
 **/node_modules/
+springapp/frontend/build/
+springapp/frontend/node/
 springapp/springbackend/build/
 springapp/springbackend/node/
 .pnp

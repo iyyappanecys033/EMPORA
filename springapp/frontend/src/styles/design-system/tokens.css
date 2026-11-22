@@ -1,0 +1,259 @@
+/* ==========================================================================
+   EMPORA Design System — Semantic Design Tokens (Light, Dark & Accessibility)
+   Brand Identity: EMPORA — Employee Services & Workflow Platform
+   Tagline: One platform. Connected operations.
+   Target Compliance: WCAG 2.2 AA (>= 4.5:1 text contrast, >= 3:1 UI contrast)
+   ========================================================================== */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Brand & Accent */
+  --ep-primary: #3730a3;
+  --ep-primary-hover: #312e81;
+  --ep-primary-active: #1e1b4b;
+  --ep-primary-subtle: #eef2ff;
+  --ep-primary-border: #c7d2fe;
+  --ep-secondary: #0f766e;
+  --ep-secondary-hover: #115e59;
+  --ep-secondary-subtle: #f0fdfa;
+
+  /* Surfaces & Backgrounds */
+  --ep-bg-page: #f4f6fa;
+  --ep-bg-surface: #ffffff;
+  --ep-bg-elevated: #ffffff;
+  --ep-bg-subtle: #f8fafc;
+  --ep-bg-muted: #f1f5f9;
+  --ep-bg-topbar: #ffffff;
+  --ep-bg-sidebar: #ffffff;
+  --ep-bg-hero-start: #1e1b4b;
+  --ep-bg-hero-end: #312e81;
+  --ep-overlay: rgba(15, 23, 42, 0.58);
+
+  /* Borders */
+  --ep-border: #e2e8f0;
+  --ep-border-strong: #cbd5e1;
+  --ep-border-subtle: #f1f5f9;
+
+  /* Typography Colors */
+  --ep-text-primary: #0f172a;
+  --ep-text-secondary: #334155;
+  --ep-text-muted: #526071;
+  --ep-text-on-brand: #ffffff;
+
+  /* Interactive States */
+  --ep-hover: #f1f5f9;
+  --ep-selected: #eef2ff;
+  --ep-selected-text: #3730a3;
+  --ep-disabled-bg: #e2e8f0;
+  --ep-disabled-text: #64748b;
+  --ep-focus-ring: #4f46e5;
+  --ep-focus-shadow: 0 0 0 3px rgba(79, 70, 229, 0.28);
+
+  /* Semantic Status Colors */
+  --ep-success: #15803d;
+  --ep-success-bg: #f0fdf4;
+  --ep-success-border: #bbf7d0;
+  --ep-success-text: #166534;
+
+  --ep-warning: #b45309;
+  --ep-warning-bg: #fffbeb;
+  --ep-warning-border: #fde68a;
+  --ep-warning-text: #92400e;
+
+  --ep-danger: #dc2626;
+  --ep-danger-hover: #b91c1c;
+  --ep-danger-bg: #fef2f2;
+  --ep-danger-border: #fecaca;
+  --ep-danger-text: #991b1b;
+
+  --ep-info: #0369a1;
+  --ep-info-bg: #f0f9ff;
+  --ep-info-border: #bae6fd;
+  --ep-info-text: #075985;
+
+  /* Ticket Status Badges (11-State Lifecycle) */
+  --ep-st-draft-bg: #f1f5f9;       --ep-st-draft-fg: #334155;       --ep-st-draft-bd: #cbd5e1;
+  --ep-st-submitted-bg: #e0f2fe;   --ep-st-submitted-fg: #0369a1;   --ep-st-submitted-bd: #bae6fd;
+  --ep-st-pending-bg: #fef3c7;     --ep-st-pending-fg: #92400e;     --ep-st-pending-bd: #fde68a;
+  --ep-st-pending2-bg: #ffedd5;    --ep-st-pending2-fg: #9a3412;    --ep-st-pending2-bd: #fed7aa;
+  --ep-st-assigned-bg: #ede9fe;    --ep-st-assigned-fg: #5b21b6;    --ep-st-assigned-bd: #ddd6fe;
+  --ep-st-progress-bg: #dbeafe;    --ep-st-progress-fg: #1e40af;    --ep-st-progress-bd: #bfdbfe;
+  --ep-st-hold-bg: #fef9c3;        --ep-st-hold-fg: #854d0e;        --ep-st-hold-bd: #fef08a;
+  --ep-st-resolved-bg: #dcfce7;    --ep-st-resolved-fg: #166534;    --ep-st-resolved-bd: #bbf7d0;
+  --ep-st-closed-bg: #e2e8f0;      --ep-st-closed-fg: #1e293b;      --ep-st-closed-bd: #cbd5e1;
+  --ep-st-rejected-bg: #fee2e2;    --ep-st-rejected-fg: #991b1b;    --ep-st-rejected-bd: #fecaca;
+  --ep-st-cancelled-bg: #f1f5f9;   --ep-st-cancelled-fg: #475569;   --ep-st-cancelled-bd: #cbd5e1;
+
+  /* Priority Badges */
+  --ep-pr-low-bg: #f0fdf4;         --ep-pr-low-fg: #166534;         --ep-pr-low-bd: #bbf7d0;
+  --ep-pr-medium-bg: #eef2ff;      --ep-pr-medium-fg: #3730a3;      --ep-pr-medium-bd: #c7d2fe;
+  --ep-pr-high-bg: #fff7ed;        --ep-pr-high-fg: #9a3412;        --ep-pr-high-bd: #fed7aa;
+  --ep-pr-urgent-bg: #fff1f2;      --ep-pr-urgent-fg: #9f1239;      --ep-pr-urgent-bd: #fecdd3;
+  --ep-pr-critical-bg: #fef2f2;    --ep-pr-critical-fg: #991b1b;    --ep-pr-critical-bd: #fca5a5;
+
+  /* Shadows */
+  --ep-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --ep-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --ep-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --ep-shadow-lg: 0 16px 32px rgba(15, 23, 42, 0.14), 0 4px 8px rgba(15, 23, 42, 0.06);
+
+  /* Typography */
+  --ep-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ep-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --ep-text-xs: 0.75rem;
+  --ep-text-sm: 0.8125rem;
+  --ep-text-base: 0.875rem;
+  --ep-text-md: 0.9375rem;
+  --ep-text-lg: 1.0625rem;
+  --ep-text-xl: 1.375rem;
+  --ep-text-2xl: 1.625rem;
+
+  /* Spacing & Sizing */
+  --ep-space-1: 4px;
+  --ep-space-2: 8px;
+  --ep-space-3: 12px;
+  --ep-space-4: 16px;
+  --ep-space-5: 20px;
+  --ep-space-6: 24px;
+  --ep-space-8: 32px;
+
+  --ep-radius-sm: 6px;
+  --ep-radius-md: 10px;
+  --ep-radius-lg: 14px;
+  --ep-radius-full: 9999px;
+
+  --ep-topbar-height: 60px;
+  --ep-sidebar-width: 248px;
+  --ep-sidebar-collapsed: 72px;
+
+  /* Density defaults (Comfortable) */
+  --ep-cell-py: 12px;
+  --ep-cell-px: 16px;
+  --ep-card-pad: 20px;
+  --ep-section-gap: 24px;
+
+  /* Motion */
+  --ep-ease: cubic-bezier(0.2, 0, 0, 1);
+  --ep-duration-fast: 150ms;
+  --ep-duration-normal: 220ms;
+}
+
+/* Hand-crafted Dark Theme Tonal Surface Ramp (Material 3 / Fluent 2 inspired) */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ep-primary: #818cf8;
+  --ep-primary-hover: #a5b4fc;
+  --ep-primary-active: #6366f1;
+  --ep-primary-subtle: rgba(129, 140, 248, 0.16);
+  --ep-primary-border: rgba(129, 140, 248, 0.35);
+  --ep-secondary: #2dd4bf;
+  --ep-secondary-hover: #5eead4;
+  --ep-secondary-subtle: rgba(45, 212, 191, 0.14);
+
+  --ep-bg-page: #0b1120;
+  --ep-bg-surface: #111827;
+  --ep-bg-elevated: #1e293b;
+  --ep-bg-subtle: #162033;
+  --ep-bg-muted: #1e293b;
+  --ep-bg-topbar: #0f172a;
+  --ep-bg-sidebar: #0f172a;
+  --ep-bg-hero-start: #1e1b4b;
+  --ep-bg-hero-end: #0f172a;
+  --ep-overlay: rgba(2, 6, 23, 0.78);
+
+  --ep-border: #263248;
+  --ep-border-strong: #3b4b66;
+  --ep-border-subtle: #1c2638;
+
+  --ep-text-primary: #f1f5f9;
+  --ep-text-secondary: #cbd5e1;
+  --ep-text-muted: #94a3b8;
+  --ep-text-on-brand: #0b1120;
+
+  --ep-hover: #1e293b;
+  --ep-selected: rgba(129, 140, 248, 0.18);
+  --ep-selected-text: #c7d2fe;
+  --ep-disabled-bg: #1e293b;
+  --ep-disabled-text: #64748b;
+  --ep-focus-ring: #a5b4fc;
+  --ep-focus-shadow: 0 0 0 3px rgba(165, 180, 252, 0.35);
+
+  --ep-success: #4ade80;
+  --ep-success-bg: rgba(34, 197, 94, 0.14);
+  --ep-success-border: rgba(74, 222, 128, 0.35);
+  --ep-success-text: #86efac;
+
+  --ep-warning: #fbbf24;
+  --ep-warning-bg: rgba(245, 158, 11, 0.15);
+  --ep-warning-border: rgba(251, 191, 36, 0.35);
+  --ep-warning-text: #fde68a;
+
+  --ep-danger: #f87171;
+  --ep-danger-hover: #ef4444;
+  --ep-danger-bg: rgba(239, 68, 68, 0.15);
+  --ep-danger-border: rgba(248, 113, 113, 0.38);
+  --ep-danger-text: #fecaca;
+
+  --ep-info: #38bdf8;
+  --ep-info-bg: rgba(56, 189, 248, 0.14);
+  --ep-info-border: rgba(56, 189, 248, 0.35);
+  --ep-info-text: #bae6fd;
+
+  --ep-st-draft-bg: rgba(148, 163, 184, 0.16);      --ep-st-draft-fg: #cbd5e1;     --ep-st-draft-bd: rgba(148, 163, 184, 0.35);
+  --ep-st-submitted-bg: rgba(56, 189, 248, 0.16);   --ep-st-submitted-fg: #7dd3fc; --ep-st-submitted-bd: rgba(56, 189, 248, 0.35);
+  --ep-st-pending-bg: rgba(251, 191, 36, 0.16);     --ep-st-pending-fg: #fde68a;   --ep-st-pending-bd: rgba(251, 191, 36, 0.35);
+  --ep-st-pending2-bg: rgba(251, 146, 60, 0.16);    --ep-st-pending2-fg: #fed7aa;  --ep-st-pending2-bd: rgba(251, 146, 60, 0.35);
+  --ep-st-assigned-bg: rgba(167, 139, 250, 0.18);   --ep-st-assigned-fg: #ddd6fe;  --ep-st-assigned-bd: rgba(167, 139, 250, 0.38);
+  --ep-st-progress-bg: rgba(96, 165, 250, 0.18);    --ep-st-progress-fg: #bfdbfe;  --ep-st-progress-bd: rgba(96, 165, 250, 0.38);
+  --ep-st-hold-bg: rgba(250, 204, 21, 0.16);        --ep-st-hold-fg: #fef08a;      --ep-st-hold-bd: rgba(250, 204, 21, 0.35);
+  --ep-st-resolved-bg: rgba(74, 222, 128, 0.16);    --ep-st-resolved-fg: #86efac;  --ep-st-resolved-bd: rgba(74, 222, 128, 0.35);
+  --ep-st-closed-bg: rgba(148, 163, 184, 0.20);     --ep-st-closed-fg: #e2e8f0;    --ep-st-closed-bd: rgba(148, 163, 184, 0.38);
+  --ep-st-rejected-bg: rgba(248, 113, 113, 0.18);   --ep-st-rejected-fg: #fecaca;  --ep-st-rejected-bd: rgba(248, 113, 113, 0.40);
+  --ep-st-cancelled-bg: rgba(148, 163, 184, 0.14);  --ep-st-cancelled-fg: #cbd5e1; --ep-st-cancelled-bd: rgba(148, 163, 184, 0.30);
+
+  --ep-pr-low-bg: rgba(74, 222, 128, 0.15);         --ep-pr-low-fg: #86efac;       --ep-pr-low-bd: rgba(74, 222, 128, 0.35);
+  --ep-pr-medium-bg: rgba(129, 140, 248, 0.18);     --ep-pr-medium-fg: #c7d2fe;    --ep-pr-medium-bd: rgba(129, 140, 248, 0.38);
+  --ep-pr-high-bg: rgba(251, 146, 60, 0.18);        --ep-pr-high-fg: #fed7aa;      --ep-pr-high-bd: rgba(251, 146, 60, 0.38);
+  --ep-pr-urgent-bg: rgba(251, 113, 133, 0.18);     --ep-pr-urgent-fg: #fecdd3;    --ep-pr-urgent-bd: rgba(251, 113, 133, 0.40);
+  --ep-pr-critical-bg: rgba(248, 113, 113, 0.22);   --ep-pr-critical-fg: #fecaca;  --ep-pr-critical-bd: rgba(248, 113, 113, 0.45);
+
+  --ep-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ep-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.40);
+  --ep-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48);
+  --ep-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.62);
+}
+
+/* Density Mode: Compact */
+[data-density='compact'] {
+  --ep-cell-py: 8px;
+  --ep-cell-px: 12px;
+  --ep-card-pad: 14px;
+  --ep-section-gap: 16px;
+}
+
+/* Font Scale: Large */
+[data-font-scale='large'] {
+  font-size: 112.5%;
+}
+
+/* Reduced Motion (System & User Preference) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
