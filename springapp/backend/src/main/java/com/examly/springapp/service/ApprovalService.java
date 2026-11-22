@@ -264,12 +264,19 @@ public class ApprovalService {
     }
 
     private UserAccount resolveEscalationApprover(String department, String excludeUsername) {
-        // Look up Department Head or Admin
+        // Look up Department Head first
         List<Profile> deptProfiles = profileRepo.findByDepartment(department);
         for (Profile p : deptProfiles) {
             if (p.getUser() != null && !p.getUser().getUsername().equalsIgnoreCase(excludeUsername)) {
-                if (ticketSecurity.hasRole(p.getUser().getUsername(), "ROLE_DEPT_HEAD") ||
-                    ticketSecurity.hasRole(p.getUser().getUsername(), "ROLE_MANAGER")) {
+                if (ticketSecurity.hasRole(p.getUser().getUsername(), "ROLE_DEPT_HEAD")) {
+                    return p.getUser();
+                }
+            }
+        }
+        // Secondary fallback to another department Manager
+        for (Profile p : deptProfiles) {
+            if (p.getUser() != null && !p.getUser().getUsername().equalsIgnoreCase(excludeUsername)) {
+                if (ticketSecurity.hasRole(p.getUser().getUsername(), "ROLE_MANAGER")) {
                     return p.getUser();
                 }
             }
