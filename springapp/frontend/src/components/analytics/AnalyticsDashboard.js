@@ -29,13 +29,13 @@ const getDefaultRange = (daysBack = 29) => {
 };
 
 const AnalyticsDashboard = () => {
-  const { isAdmin, isAuditor, department: userDepartment } = useAuth();
+  const { isAdmin, isAuditor, department: userDepartment, loading: authLoading } = useAuth();
   const canSelectAnyDepartment = isAdmin || isAuditor;
 
   const initialRange = useMemo(() => getDefaultRange(29), []);
   const [startDate, setStartDate] = useState(initialRange.startDate);
   const [endDate, setEndDate] = useState(initialRange.endDate);
-  const [departmentFilter, setDepartmentFilter] = useState(canSelectAnyDepartment ? 'ALL' : userDepartment || '');
+  const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('');
 
   const [bundle, setBundle] = useState(null);
@@ -63,8 +63,10 @@ const AnalyticsDashboard = () => {
   }, [startDate, endDate, departmentFilter, priorityFilter, canSelectAnyDepartment]);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+    if (!authLoading) {
+      fetchAnalytics();
+    }
+  }, [authLoading, fetchAnalytics]);
 
   const applyPreset = (daysBack) => {
     const next = getDefaultRange(daysBack);
