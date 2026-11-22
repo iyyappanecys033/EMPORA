@@ -3,6 +3,8 @@ package com.examly.springapp.security;
 import com.examly.springapp.dto.AuthResponse;
 import com.examly.springapp.dto.LoginRequest;
 import com.examly.springapp.dto.RegisterRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthService authService;
 
@@ -124,6 +128,7 @@ public class AuthController {
             HttpHeaders headers = generateCookieHeaders(tokens.accessToken, tokens.rawRefreshToken);
             return ResponseEntity.ok().headers(headers).body(new AuthResponse(tokens.username, "Token refreshed successfully"));
         } catch (Exception e) {
+            log.warn("Token refresh rejected: {}", e.getMessage(), e);
             HttpHeaders headers = generateClearCookieHeaders();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).build();
         }

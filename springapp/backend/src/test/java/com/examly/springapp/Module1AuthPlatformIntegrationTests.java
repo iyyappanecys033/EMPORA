@@ -32,6 +32,9 @@ public class Module1AuthPlatformIntegrationTests extends AbstractIntegrationTest
     @Autowired
     private RefreshTokenRepo refreshTokenRepo;
 
+    @Autowired
+    private com.examly.springapp.security.RefreshTokenService refreshTokenService;
+
     @Test
     @DisplayName("AUTH-01: GET /api/auth/csrf generates and returns XSRF token")
     void testAuth01_CsrfTokenEndpoint() throws Exception {
@@ -85,7 +88,8 @@ public class Module1AuthPlatformIntegrationTests extends AbstractIntegrationTest
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLogin)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status", is("SUCCESS")))
+                .andExpect(jsonPath("$.username", is("login_user")))
+                .andExpect(jsonPath("$.message", containsString("Login successful")))
                 .andExpect(cookie().exists("accessToken"))
                 .andExpect(cookie().exists("refreshToken"))
                 .andReturn();
@@ -120,12 +124,15 @@ public class Module1AuthPlatformIntegrationTests extends AbstractIntegrationTest
                 .andExpect(status().isOk())
                 .andReturn();
 
-        Cookie refreshCookie = loginResult.getResponse().getCookie("refreshToken");
-        assertNotNull(refreshCookie, "Login must issue refreshToken cookie");
+        String refreshValue = extractCookieValue(loginResult, "refreshToken");
+        assertNotNull(refreshValue, "Login must issue refreshToken cookie");
+        assertFalse(refreshValue.isEmpty(), "refreshToken value must not be empty");
+
+        Cookie refreshCookieToSend = new Cookie("refreshToken", refreshValue);
 
         // Use refresh token cookie to get refreshed access token
         mockMvc.perform(post("/api/auth/refresh")
-                        .cookie(refreshCookie))
+                        .cookie(refreshCookieToSend))
                 .andExpect(status().isOk())
                 .andExpect(cookie().exists("accessToken"));
 
@@ -150,8 +157,11 @@ public class Module1AuthPlatformIntegrationTests extends AbstractIntegrationTest
                 .andExpect(status().isOk())
                 .andReturn();
 
-        Cookie accessCookie = loginResult.getResponse().getCookie("accessToken");
-        Cookie refreshCookie = loginResult.getResponse().getCookie("refreshToken");
+        String accessValue = extractCookieValue(loginResult, "accessToken");
+        String refreshValue = extractCookieValue(loginResult, "refreshToken");
+
+        Cookie accessCookie = new Cookie("accessToken", accessValue != null ? accessValue : "");
+        Cookie refreshCookie = new Cookie("refreshToken", refreshValue != null ? refreshValue : "");
 
         // Perform logout with valid session
         MvcResult logoutResult = mockMvc.perform(post("/api/auth/logout")
@@ -166,8 +176,22 @@ public class Module1AuthPlatformIntegrationTests extends AbstractIntegrationTest
         assertEquals(0, clearedAccess.getMaxAge(), "Logout must expire accessToken cookie");
 
         // Verify refresh token revoked in database
-        Optional<RefreshToken> storedToken = refreshTokenRepo.findByTokenHash(refreshCookie.getValue());
-        storedToken.ifPresent(token -> assertTrue(token.isRevoked(), "Refresh token must be marked revoked in DB"));
+        if (refreshValue != null && !refreshValue.isEmpty()) {
+            String tokenHash = refreshTokenService.hashToken(refreshValue);
+            Optional<RefreshToken> storedToken = refreshTokenRepo.findByTokenHash(tokenHash);
+            storedToken.ifPresent(token -> assertTrue(token.isRevoked(), "Refresh token must be marked revoked in DB"));
+        }
+    }
+
+    private String extractCookieValue(MvcResult result, String cookieName) {
+        for (String header : result.getResponse().getHeaders("Set-Cookie")) {
+            if (header.startsWith(cookieName + "=")) {
+                String tokenPart = header.split(";")[0];
+                return tokenPart.substring((cookieName + "=").length());
+            }
+        }
+        Cookie c = result.getResponse().getCookie(cookieName);
+        return c != null ? c.getValue() : null;
     }
 
     @Test

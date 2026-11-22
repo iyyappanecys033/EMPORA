@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS profile (
     user_id BIGINT NULL,
     first_name VARCHAR(50) NULL,
     last_name VARCHAR(50) NULL,
-    address VARCHAR(255) NULL,
+    address VARCHAR(512) NULL,
     dob DATE NULL,
     gender VARCHAR(20) NULL,
     department VARCHAR(50) NULL,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS profile (
     salary DOUBLE NULL,
     date_of_joining DATE NULL,
     reporting_manager VARCHAR(50) NULL,
-    emergency_contact VARCHAR(50) NULL,
+    emergency_contact VARCHAR(255) NULL,
     CONSTRAINT uk_profile_employee_id UNIQUE (employee_id),
     CONSTRAINT fk_profile_user FOREIGN KEY (user_id) REFERENCES user_account (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
