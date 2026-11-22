@@ -17,7 +17,11 @@ public class Profile {
 
     private String firstName;
     private String lastName;
+
+    @Convert(converter = com.examly.springapp.security.AesGcmEncryptionConverter.class)
+    @Column(columnDefinition = "TEXT")
     private String address;
+
     private LocalDate dob;
     private String gender;
 
@@ -26,6 +30,9 @@ public class Profile {
     private Double salary;
     private LocalDate dateOfJoining;
     private String reportingManager;
+
+    @Convert(converter = com.examly.springapp.security.AesGcmEncryptionConverter.class)
+    @Column(columnDefinition = "VARCHAR(512)")
     private String emergencyContact;
 
     @ManyToOne

@@ -2,56 +2,73 @@ package com.examly.springapp.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.*;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.util.StringUtils;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * [A01: Broken Access Control, A02: Security Misconfiguration, A07: Authentication Failures, A08: Integrity Failures]
+ * Hardened production Spring Security 6 configuration enforcing OWASP Top 10:2025 defensive controls.
+ */
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final JwtFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
+    private final RateLimitingFilter rateLimitingFilter;
 
-    public SecurityConfig(JwtFilter jwtFilter, CustomUserDetailsService userDetailsService) {
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    private String allowedOrigins;
+
+    public SecurityConfig(JwtFilter jwtFilter,
+                          CustomUserDetailsService userDetailsService,
+                          RateLimitingFilter rateLimitingFilter) {
         this.jwtFilter = jwtFilter;
         this.userDetailsService = userDetailsService;
+        this.rateLimitingFilter = rateLimitingFilter;
     }
 
+    /**
+     * [A04: Cryptographic Failures]
+     * High-work-factor password hashing utilizing BCrypt with strength 12 (4096 rounds).
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
@@ -67,39 +84,85 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * [A01: Broken Access Control]
+     * Strict CORS configuration allowing only trusted frontend origins without wildcards (*).
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOrigins(origins);
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "X-XSRF-TOKEN",
+                "X-Correlation-ID",
+                "Accept",
+                "Origin",
+                "Cookie"
+        ));
+        configuration.setExposedHeaders(Arrays.asList("X-Correlation-ID", "Set-Cookie", "Retry-After"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // [A08: Integrity Failures] Cookie CSRF token repository with Double-Submit verification
         CookieCsrfTokenRepository csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        csrfRepo.setCookiePath("/"); // Ensure accessible everywhere
-        // Configure secure based on same properties if necessary, but Spring handles it automatically mostly.
-        
-        http.cors(org.springframework.security.config.Customizer.withDefaults())
+        csrfRepo.setCookiePath("/");
+
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf
                 .csrfTokenRepository(csrfRepo)
                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                 .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy())
-                .ignoringRequestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh") // login/register/refresh might not have CSRF initially
+                .ignoringRequestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh")
             )
+            // [A02: Security Misconfiguration] Strict HTTP Security Response Headers
             .headers(headers -> headers
-                .xssProtection(xss -> xss.disable()) // Deprecated in modern browsers, CSP is better
-                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:3000; connect-src 'self' http://localhost:3000 http://localhost:8080; frame-ancestors 'none'; object-src 'none'"))
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; " +
+                    "script-src 'self'; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data:; " +
+                    "font-src 'self'; " +
+                    "connect-src 'self' http://localhost:8080 http://localhost:3000; " +
+                    "frame-ancestors 'none'; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'"
+                ))
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)
+                    .preload(true)
+                )
                 .frameOptions(frame -> frame.deny())
-                .contentTypeOptions(contentType -> {}) // Enables nosniff by default
+                .contentTypeOptions(contentType -> {}) // nosniff
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .permissionsPolicy(perms -> perms.policy("camera=(), microphone=(), geolocation=()"))
             )
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    log.warn("Filter-level access denied on {} {}: {} - {} | hasCookieHeader={} | hasXsrfHeader={}",
-                            request.getMethod(), request.getRequestURI(),
-                            accessDeniedException.getClass().getSimpleName(),
+                    log.warn("[A01: Broken Access Control] Access denied on {} {}: {} | User: {}",
+                            request.getMethod(),
+                            LogSanitizer.sanitize(request.getRequestURI()),
                             accessDeniedException.getMessage(),
-                            request.getHeader("Cookie") != null && request.getHeader("Cookie").contains("XSRF-TOKEN"),
-                            request.getHeader("X-XSRF-TOKEN") != null);
+                            request.getUserPrincipal() != null ? LogSanitizer.sanitize(request.getUserPrincipal().getName()) : "anonymous");
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/problem+json");
-                    response.getWriter().write("{\"type\":\"about:blank\",\"title\":\"Forbidden\",\"status\":403,\"detail\":\"Access denied or missing/invalid CSRF token.\"}");
+                    response.getWriter().write("{\"type\":\"https://empora.internal/errors/forbidden\",\"title\":\"Forbidden\",\"status\":403,\"detail\":\"Access denied or missing/invalid CSRF token.\"}");
                 })
             )
+            // [A01: Broken Access Control] Deny-by-default route authorization
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
@@ -111,36 +174,15 @@ public class SecurityConfig {
                     "/static/**",
                     "/*.ico",
                     "/*.png",
-                    "/*.json",
-                    "/catalog",
-                    "/tickets",
-                    "/tickets/**",
-                    "/approvals",
-                    "/queue",
-                    "/queue/**",
-                    "/audit-chain",
-                    "/notifications",
-                    "/notifications/**",
-                    "/analytics",
-                    "/analytics/**",
-                    "/profile",
-                    "/preferences",
-                    "/admin/metrics",
-                    "/users",
-                    "/users/**",
-                    "/roles",
-                    "/roles/**",
-                    "/profiles",
-                    "/profiles/**",
-                    "/user-role-mappings",
-                    "/user-role-mappings/**",
-                    "/audit",
-                    "/audit/**"
+                    "/*.json"
                 ).permitAll()
+                // Strictly Gated Enterprise Portal (Option 2): All business resources require authentication
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
+            // [A06: Insecure Design] Add RateLimitingFilter before authentication processing
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
 
@@ -148,9 +190,9 @@ public class SecurityConfig {
     }
 
     /**
+     * [A08: Software or Data Integrity Failures]
      * Spring Security 6 SPA CSRF handler: validates raw X-XSRF-TOKEN header values read from
-     * CookieCsrfTokenRepository while preserving XOR BREACH-masked validation for form parameters
-     * and MockMvc csrf() requests.
+     * CookieCsrfTokenRepository while preserving XOR BREACH-masked validation for form parameters.
      */
     static final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeHandler {
         private final CsrfTokenRequestHandler delegate = new XorCsrfTokenRequestAttributeHandler();

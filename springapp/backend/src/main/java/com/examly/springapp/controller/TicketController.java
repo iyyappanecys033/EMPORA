@@ -10,11 +10,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
 
+/**
+ * [A01: Broken Access Control & IDOR Prevention]
+ * Method-level secured Ticket Lifecycle REST Controller.
+ * Mutating endpoints strictly block AUDITOR role and enforce organizational scope.
+ */
 @RestController
 @RequestMapping("/api/v1/tickets")
 public class TicketController {
@@ -28,6 +34,7 @@ public class TicketController {
         this.queryService = queryService;
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'DEPT_HEAD', 'RESOLVER', 'IT_SUPPORT', 'HR_SPECIALIST', 'FACILITIES_CREW', 'ADMIN') and !hasRole('AUDITOR')")
     @PostMapping
     public ResponseEntity<ServiceTicketDTO> submitTicket(@Valid @RequestBody CreateTicketRequestDTO request, 
                                                          Principal principal) {
@@ -36,6 +43,7 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")
     public ResponseEntity<ServiceTicketDTO> getTicketById(@PathVariable("id") Long id, 
                                                           Principal principal) {
@@ -44,6 +52,7 @@ public class TicketController {
         return ResponseEntity.ok(ticket);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/my")
     public ResponseEntity<Page<ServiceTicketDTO>> getMyTickets(
             @RequestParam(name = "page", defaultValue = "0") int page,
@@ -57,6 +66,7 @@ public class TicketController {
         return ResponseEntity.ok(tickets);
     }
 
+    @PreAuthorize("hasAnyRole('RESOLVER', 'IT_SUPPORT', 'HR_SPECIALIST', 'FACILITIES_CREW', 'DEPT_HEAD', 'ADMIN') and !hasRole('AUDITOR')")
     @PostMapping("/{id}/assign")
     public ResponseEntity<ServiceTicketDTO> assignTicket(@PathVariable("id") Long id,
                                                          @Valid @RequestBody(required = false) TicketAssignRequestDTO request,
@@ -67,6 +77,7 @@ public class TicketController {
         return ResponseEntity.ok(updated);
     }
 
+    @PreAuthorize("hasAnyRole('RESOLVER', 'IT_SUPPORT', 'HR_SPECIALIST', 'FACILITIES_CREW', 'DEPT_HEAD', 'ADMIN') and !hasRole('AUDITOR')")
     @PostMapping("/{id}/status")
     public ResponseEntity<ServiceTicketDTO> updateStatus(@PathVariable("id") Long id,
                                                          @Valid @RequestBody TicketStatusUpdateRequestDTO request,
@@ -76,6 +87,7 @@ public class TicketController {
         return ResponseEntity.ok(updated);
     }
 
+    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     @PostMapping("/{id}/cancel")
     public ResponseEntity<ServiceTicketDTO> cancelTicket(@PathVariable("id") Long id,
                                                          @Valid @RequestBody(required = false) TicketActionRequestDTO request,
@@ -87,6 +99,7 @@ public class TicketController {
         return ResponseEntity.ok(updated);
     }
 
+    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     @PostMapping("/{id}/reopen")
     public ResponseEntity<ServiceTicketDTO> reopenTicket(@PathVariable("id") Long id,
                                                          @Valid @RequestBody(required = false) TicketActionRequestDTO request,
@@ -98,6 +111,7 @@ public class TicketController {
         return ResponseEntity.ok(updated);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<TicketCommentDTO>> getComments(@PathVariable("id") Long id,
                                                               Principal principal) {
@@ -106,6 +120,7 @@ public class TicketController {
         return ResponseEntity.ok(comments);
     }
 
+    @PreAuthorize("isAuthenticated() and !hasRole('AUDITOR')")
     @PostMapping("/{id}/comments")
     public ResponseEntity<TicketCommentDTO> addComment(@PathVariable("id") Long id,
                                                        @Valid @RequestBody TicketCommentRequestDTO request,

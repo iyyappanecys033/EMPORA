@@ -6,11 +6,16 @@ import com.examly.springapp.service.ApprovalService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
 
+/**
+ * [A01: Broken Access Control & Anti-Self-Approval]
+ * Method-level secured Approval REST Controller.
+ */
 @RestController
 @RequestMapping("/api/v1/approvals")
 public class ApprovalController {
@@ -22,6 +27,7 @@ public class ApprovalController {
         this.approvalService = approvalService;
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'DEPT_HEAD', 'ADMIN') and !hasRole('AUDITOR')")
     @GetMapping("/pending")
     public ResponseEntity<List<ApprovalTaskDTO>> getPendingApprovals(Principal principal) {
         String username = principal != null ? principal.getName() : "anonymousUser";
@@ -29,6 +35,7 @@ public class ApprovalController {
         return ResponseEntity.ok(pending);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/tickets/{ticketId}")
     public ResponseEntity<List<ApprovalTaskDTO>> getApprovalHistory(
             @PathVariable("ticketId") Long ticketId,
@@ -38,6 +45,7 @@ public class ApprovalController {
         return ResponseEntity.ok(history);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'DEPT_HEAD', 'ADMIN') and !hasRole('AUDITOR')")
     @PostMapping("/{taskId}/decide")
     public ResponseEntity<ApprovalTaskDTO> decideApproval(
             @PathVariable("taskId") Long taskId,

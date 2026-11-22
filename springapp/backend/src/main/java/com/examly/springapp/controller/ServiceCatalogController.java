@@ -10,10 +10,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * [A01: Broken Access Control & Strictly Gated Portal]
+ * Service Catalog Controller protected by mandatory authentication.
+ * No service catalog items, categories, or SLAs are exposed without an active authenticated session.
+ */
 @RestController
 @RequestMapping("/api/v1/catalog")
+@PreAuthorize("isAuthenticated()")
 public class ServiceCatalogController {
 
     private final ServiceCatalogRepository catalogRepository;
@@ -61,4 +68,3 @@ public class ServiceCatalogController {
         return ResponseEntity.ok(ServiceCatalogItemDTO.fromEntity(item));
     }
 }
-

@@ -1,8 +1,11 @@
 # Low-Level Design (LLD) & Component Specifications
-## Employee Lifecycle and Service Management Platform (EPAMS)
+## EMPORA — Employee Services & Workflow Platform
+**One platform. Connected operations.**
 
-**Document ID:** EPAMS-LLD-001  
-**Version:** 1.0.0  
+*A platform for managing employee services, approvals, cross-department workflows and organisational operations.*
+
+**Document ID:** EMPORA-LLD-001  
+**Version:** 2.0.0  
 **Date:** November 2026  
 **Status:** Approved Architecture Baseline  
 **Author:** Principal Software Architect & Senior Java Engineer  
@@ -11,12 +14,12 @@
 
 ## 1. Design Principles & SOLID Alignment
 
-The Low-Level Design of EPAMS adheres to pragmatic object-oriented and enterprise design principles:
-1. **Single Responsibility Principle (SRP):** Classes have one reason to change. Command mutations (`TicketCommandService`) are isolated from analytical queries (`TicketQueryService`).
-2. **Open/Closed Principle (OCP):** New request routing rules and SLA policies can be plugged into `WorkflowRoutingEngine` without altering existing state machine logic.
+The Low-Level Design of EMPORA adheres to pragmatic object-oriented, clean-architecture, and enterprise design principles:
+1. **Single Responsibility Principle (SRP):** Classes have one reason to change. Command mutations (`TicketCommandService`) are decoupled from analytical queries (`TicketQueryService`). Cryptographic conversions (`AesGcmEncryptionConverter`) are isolated from persistence entities.
+2. **Open/Closed Principle (OCP):** Request routing strategies (`WorkflowRoutingEngine`) and SLA calendar calculators (`BusinessCalendar`) can be extended without altering the core state machine transitions.
 3. **Liskov Substitution Principle (LSP):** Core domain abstractions (e.g. `NotificationChannel`) allow swapping `EmailNotificationChannel` and `InAppNotificationChannel` transparently.
-4. **Interface Segregation Principle (ISP):** Repositories and service interfaces provide focused contracts tailored to caller requirements rather than bloated god-interfaces.
-5. **Dependency Inversion Principle (DIP):** High-level workflow services depend on abstract repositories and event publishers rather than concrete infrastructure details.
+4. **Interface Segregation Principle (ISP):** Focused contracts for repositories and services rather than monolithic god-interfaces.
+5. **Dependency Inversion Principle (DIP):** High-level workflow orchestrators depend on repository interfaces and event publishers rather than concrete infrastructure details.
 
 ---
 
@@ -47,6 +50,8 @@ classDiagram
         -String department
         -String designation
         -Double salary
+        -String address (AES-256-GCM Encrypted)
+        -String emergencyContact (AES-256-GCM Encrypted)
         -LocalDate dateOfJoining
         -String reportingManager
         -UserAccount user
@@ -140,83 +145,33 @@ classDiagram
 
 ---
 
-## 3. Core Service Contracts & Responsibilities
+## 3. OWASP Top 10:2025 Preventive Defensive Architecture
 
-### 3.1 `module.ticket` Services
-
-#### `TicketCommandService`
-Handles state-altering mutations on service tickets within local ACID transactions.
-```java
-public interface TicketCommandService {
-    ServiceTicketDTO createTicket(CreateTicketRequestDTO dto, String requesterUsername);
-    ServiceTicketDTO assignTicket(Long ticketId, Long assigneeId, String actorUsername);
-    ServiceTicketDTO updateStatus(Long ticketId, TicketStatus newStatus, String reason, Long version, String actorUsername);
-    ServiceTicketDTO cancelTicket(Long ticketId, String reason, Long version, String requesterUsername);
-    ServiceTicketDTO reopenTicket(Long ticketId, String reason, Long version, String requesterUsername);
-}
+```mermaid
+graph TD
+    Client["Browser / React 18 SPA<br/>(withCredentials: true)"] -->|1. Request with Cookies & CSRF Header| RateLimit["RateLimitingFilter<br/>[A06: Sliding Window 15 req/min]"]
+    RateLimit -->|2. Passed Rate Check| JwtFilter["JwtFilter<br/>[A07: Validate HttpOnly JWT Cookie]"]
+    JwtFilter -->|3. Security Context Set| CsrfFilter["CsrfFilter / SpaCsrfTokenRequestHandler<br/>[A08: Double-Submit Header Verification]"]
+    CsrfFilter -->|4. Security Filter Chain| Controller["@PreAuthorize / RestController<br/>[A01: Deny-by-default Method Security]"]
+    Controller -->|5. Business Logic| Service["Service Tier (@Transactional)<br/>[A01: IDOR & Scope Ownership Check]"]
+    Service -->|6. Data Mapping| Converter["AesGcmEncryptionConverter<br/>[A04: AES-256-GCM Field Encryption]"]
+    Converter -->|7. Ciphertext / SQL Parameters| MySQL[("MySQL 8 Database<br/>[A05: Parameterized Queries & TLS]")]
 ```
 
-#### `TicketQueryService`
-Handles high-performance read-only queries, filtering, and pagination.
-```java
-public interface TicketQueryService {
-    ServiceTicketDetailDTO getTicketById(Long ticketId, String callerUsername);
-    Page<ServiceTicketDTO> getMyTickets(String requesterUsername, Pageable pageable);
-    Page<ServiceTicketDTO> getDepartmentQueue(String department, TicketStatus status, Pageable pageable);
-}
-```
+### 3.1 Mapping of Security Controls to OWASP Top 10:2025
 
-#### `SlaCalculationEngine`
-Calculates business-hour deadlines, tracking working calendars and pause intervals.
-```java
-public interface SlaCalculationEngine {
-    LocalDateTime calculateTargetDeadline(LocalDateTime startTime, int slaHours);
-    int calculateElapsedBusinessMinutes(LocalDateTime start, LocalDateTime end);
-    LocalDateTime extendDeadline(LocalDateTime originalTarget, int pausedMinutes);
-}
-```
-
----
-
-### 3.2 `module.workflow` Services
-
-#### `WorkflowRoutingEngine`
-Evaluates business rules (`ADR-001`) to construct the approval pipeline.
-```java
-public interface WorkflowRoutingEngine {
-    void routeTicket(ServiceTicket ticket);
-    boolean requiresSecondaryApproval(ServiceTicket ticket);
-}
-```
-
-#### `ApprovalDecisionService`
-Processes human managerial decisions with mandatory validation.
-```java
-public interface ApprovalDecisionService {
-    ApprovalDecisionResultDTO decide(Long taskId, DecisionDTO decisionDto, String approverUsername);
-    Page<ApprovalTaskDTO> getPendingApprovals(String approverUsername, Pageable pageable);
-}
-```
-
----
-
-### 3.3 `module.audit` Services
-
-#### `AuditLogService`
-Performs synchronous cryptographic hash chaining within the business transaction.
-```java
-public interface AuditLogService {
-    AuditLog logEvent(String actorUsername, String action, String targetUsername, String details);
-}
-```
-
-#### `AuditVerificationService`
-Validates cryptographic continuity across the entire ledger.
-```java
-public interface AuditVerificationService {
-    AuditVerificationReport verifyChainIntegrity();
-}
-```
+| OWASP ID | Category | Implementation Component in EMPORA | Production Defensive Invariant |
+| :--- | :--- | :--- | :--- |
+| **A01** | Broken Access Control | `SecurityConfig`, `TicketSecurityEvaluator`, `@PreAuthorize` | Deny-by-default on all endpoints; strict CORS (`allowCredentials=true`, no `*` wildcards); IDOR ownership checks in service tier; React route guards. |
+| **A02** | Security Misconfiguration | `SecurityConfig`, `application-mysql.properties`, `least-privilege-mysql-user.sql` | Stack traces and whitelabel disabled; strict HTTP response headers (CSP, HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy); Actuator lockdown; MySQL runtime user stripped of DDL/admin grants. |
+| **A03** | Software Supply Chain Failures | `pom.xml`, `package.json`, `index.html` | OWASP Dependency-Check plugin with CVSS 7 threshold; `npm audit`; zero external unverified CDN scripts; strict CSP `script-src 'self'`. |
+| **A04** | Cryptographic Failures | `AesGcmEncryptionConverter`, `SecurityConfig` | AES-256-GCM with authenticated 128-bit tags and 96-bit random IVs for sensitive PII (`Profile.address`, `Profile.emergencyContact`); BCrypt strength 12; TLS 1.2/1.3 on MySQL JDBC and client-server HTTPS. |
+| **A05** | Injection (SQLi, XSS, Command Injection) | Spring Data JPA Repositories, DTOs, `securityUtils.js` | Strictly parameterized JPQL/derived queries; Jakarta Bean Validation (`@Valid`, `@NotBlank`, `@Size`, `@Pattern`); JSX auto-escaping and safe URL scheme validator (`getSafeUrl`). |
+| **A06** | Insecure Design | `RateLimitingFilter`, `TicketStateMachine`, `AntiSelfApprovalValidator` | Sliding token window rate limiter on auth endpoints (15 req/min per IP); account lockout after 5 failed attempts; server-side FSM invariant checks inside `@Transactional` methods. |
+| **A07** | Authentication Failures | `AuthController`, `AuthService`, `RefreshTokenService` | Tokens in `HttpOnly`, `Secure`, `SameSite=Strict/Lax` cookies; rotating one-time refresh tokens stored as SHA-256 hashes in MySQL with reuse detection; generic "Invalid credentials" error responses. |
+| **A08** | Software or Data Integrity Failures | `CsrfCookieFilter`, `SpaCsrfTokenRequestHandler`, DTOs | Double-Submit CSRF cookie + header protection on all mutating requests; immutable DTO request binding (`@RequestBody`) preventing JPA Mass Assignment; no untrusted deserialization. |
+| **A09** | Security Logging & Alerting Failures | `LogSanitizer`, `CorrelationIdFilter`, `AuditChainService` | CRLF injection sanitization; masking of tokens, passwords, and PII; correlation IDs attached via MDC; continuous SHA-256 hash-chained immutable audit ledger. |
+| **A10** | Mishandling of Exceptional Conditions | `GlobalExceptionHandler`, `ErrorBoundary.js`, `@Transactional` | RFC 7807 `ProblemDetail` responses suppressing internal stack traces and database schema; atomic rollback on all checked/unchecked exceptions; React Error Boundary catching unhandled UI errors. |
 
 ---
 
@@ -265,7 +220,7 @@ public class TicketStateMachine {
                 "Tickets in 'IN_PROGRESS' state cannot be cancelled unilaterally. Please coordinate with the assigned resolver.");
         }
 
-        // 4. Dispute window validation for reopening (BR-003: 48 business hours, inclusive of exact deadline)
+        // 4. Dispute window validation for reopening (BR-003: 48 business hours)
         if (current == TicketStatus.RESOLVED && nextStatus == TicketStatus.IN_PROGRESS) {
             LocalDateTime now = businessCalendar.nowInBusinessZone(clock);
             if (ticket.getResolvedAt() == null || !businessCalendar.isWithinReopenWindow(ticket.getResolvedAt(), now)) {
@@ -287,7 +242,7 @@ public class TicketStateMachine {
 
 ## 5. Anti-Self-Approval Enforcement (`BR-005`, `BR-010`)
 
-To prevent employees (including managers) from approving their own requests, `AntiSelfApprovalValidator` verifies identity during approval routing and decision execution:
+To prevent employees (including managers and department heads) from approving their own requests, `TicketSecurityEvaluator` and `AntiSelfApprovalValidator` verify identity during approval routing and decision execution:
 
 ```java
 @Component
@@ -304,54 +259,17 @@ public class AntiSelfApprovalValidator {
 
 ---
 
-## 6. Domain Event Architecture & Decoupling
+## 6. Global Exception Handling & Problem Details Mapping
 
-EPAMS carefully decouples transactional auditing from post-commit side effects:
-
-```mermaid
-graph TD
-    TicketCommandSvc["TicketCommandService<br/>(@Transactional)"] -->|1. Mutate Ticket in DB| MySQL[("MySQL Database<br/>(service_ticket)")]
-    TicketCommandSvc -->|2. Direct Synchronous Call (Same JDBC TX)| AuditService["AuditLogService.logEvent(...)"]
-    AuditService -->|3. Lock & Hash Chain in Same TX| AuditTable[("audit_chain_head & audit_log")]
-    
-    TicketCommandSvc -->|4. publishEvent() on Success| SpringBus["Spring ApplicationEventPublisher"]
-
-    SpringBus -->|5. Asynchronous @Async AFTER_COMMIT| NotifyListener["@TransactionalEventListener(phase = AFTER_COMMIT)<br/>NotificationEventListener"]
-    NotifyListener -->|Send Email Alert| SMTP["Mailpit / SMTP Relay"]
-    NotifyListener -->|Insert Alert Badge| NotifyTable[("notification table")]
-```
-
-### 6.1 Transactional Mechanics: Direct Audit vs. Asynchronous Notification
-1. **Core Audit Persistence (Atomic):** `AuditLogService.logEvent(...)` is called **directly and synchronously** from the command service within the active `@Transactional(isolation = Isolation.READ_COMMITTED)` boundary. If an audit write or hash calculation fails, the entire transaction (including ticket mutation) rolls back atomically.
-2. **Notification Dispatch (Post-Commit Decoupled):** Notification and email triggers are subscribed via:
-   `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)` combined with `@Async`.
-   This guarantees that:
-   * Notifications are dispatched **only if and when** the database transaction has committed successfully.
-   * If the external SMTP relay or Mailpit times out, the committed ticket state and audit log are completely unaffected.
-    NotifyListener -->|Insert Alert Badge| NotifyTable[("notification table")]
-```
-
-### Event Classes
-1. `TicketCreatedEvent`: Fired upon initial ticket submission.
-2. `ApprovalRequiredEvent`: Dispatched to notify manager of pending task.
-3. `TicketApprovedEvent`: Dispatched when managerial sign-off is completed.
-4. `TicketStateChangedEvent`: Fired on every FSM state transition.
-5. `TicketResolvedEvent`: Triggers the 48-business-hour verification countdown.
-
----
-
-## 7. Global Exception Handling & Error Code Mapping
-
-The `@RestControllerAdvice` component centralizes error handling, mapping domain and database exceptions into RFC 7807 responses:
+Centralized `@RestControllerAdvice` translates domain exceptions into sanitized RFC 7807 responses without exposing SQL or stack traces:
 
 | Java Exception Class | HTTP Status Code | Response Error Code | Client Remediation Action |
 | :--- | :--- | :--- | :--- |
 | `OptimisticLockException` | **409 Conflict** | `CONFLICT` | Prompt user to reload page and re-verify before acting. |
 | `IllegalStateTransitionException` | **400 Bad Request** | `ILLEGAL_STATE_TRANSITION`| User attempted prohibited FSM state jump. |
-| `AntiSelfApprovalException` | **400 Bad Request** | `ANTI_SELF_APPROVAL_VIOLATION` | Re-route task to supervisor. |
-| `MethodArgumentNotValidException` | **400 Bad Request** | `VALIDATION_FAILED` | Display field-specific validation errors. |
-| `BadCredentialsException` | **401 Unauthorized** | `INVALID_CREDENTIALS` | Check username and password. |
-| `LockedException` | **423 Locked** | `ACCOUNT_LOCKED` | Wait for 15-min lockout window or contact Admin. |
-| `AccessDeniedException` | **403 Forbidden** | `FORBIDDEN` | Caller lacks authorized security role. |
-| `EntityNotFoundException` | **404 Not Found** | `NOT_FOUND` | Verify ID of requested resource. |
-
+| `AccessDeniedException` | **403 Forbidden** | `FORBIDDEN` | Caller lacks the role or organizational scope. |
+| `UnauthorizedScopeException`| **403 Forbidden** | `FORBIDDEN_SCOPE` | IDOR prevention; caller does not own the resource. |
+| `AuthenticationException` | **401 Unauthorized** | `UNAUTHORIZED` | Expired session or invalid credentials. |
+| `ResourceNotFoundException` | **404 Not Found** | `NOT_FOUND` | Requested record does not exist. |
+| `RateLimitExceededException`| **429 Too Many Requests** | `RATE_LIMIT_EXCEEDED` | Client exceeded 15 req/min rate quota. |
+| `Exception` (Unhandled) | **500 Internal Error** | `INTERNAL_ERROR` | Generic message returned; full stack trace logged internally. |

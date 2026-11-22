@@ -8,10 +8,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
+/**
+ * [A01: Broken Access Control & IDOR Prevention]
+ * Method-level secured Department Resolver Queue REST Controller.
+ */
 @RestController
 @RequestMapping("/api/v1/departments")
 public class DepartmentQueueController {
@@ -23,6 +28,7 @@ public class DepartmentQueueController {
         this.queryService = queryService;
     }
 
+    @PreAuthorize("hasAnyRole('RESOLVER', 'IT_SUPPORT', 'HR_SPECIALIST', 'FACILITIES_CREW', 'DEPT_HEAD', 'ADMIN', 'AUDITOR')")
     @GetMapping("/{department}/queue")
     public ResponseEntity<Page<ServiceTicketDTO>> getDepartmentQueue(
             @PathVariable("department") String department,

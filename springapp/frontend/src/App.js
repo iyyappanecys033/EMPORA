@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-ro
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { PreferencesProvider } from './services/PreferencesContext';
 import { ToastProvider } from './services/ToastContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import AppLayout from './components/layout/AppLayout';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import EmployeeDashboard from './components/dashboard/EmployeeDashboard';
@@ -214,15 +215,17 @@ function AppContent() {
 
 function App() {
   return (
-    <PreferencesProvider>
-      <ToastProvider>
-        <Router>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </Router>
-      </ToastProvider>
-    </PreferencesProvider>
+    <ErrorBoundary>
+      <PreferencesProvider>
+        <ToastProvider>
+          <Router>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          </Router>
+        </ToastProvider>
+      </PreferencesProvider>
+    </ErrorBoundary>
   );
 }
 
