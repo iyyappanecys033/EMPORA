@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../services/AuthContext';
 import Alert from './common/Alert';
 
-const LoginModal = ({ isOpen, onClose }) => {
+const LoginModal = ({ isOpen, onClose, initialRegister = false }) => {
   const { login, register } = useAuth();
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(initialRegister);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
@@ -16,6 +16,7 @@ const LoginModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (!isOpen) return undefined;
+    setIsRegister(Boolean(initialRegister));
     previousFocusRef.current = document.activeElement;
     setErrorObj(null);
     const focusTimer = setTimeout(() => userInputRef.current?.focus(), 20);
@@ -25,7 +26,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         previousFocusRef.current.focus();
       }
     };
-  }, [isOpen]);
+  }, [isOpen, initialRegister]);
 
   useEffect(() => {
     if (!isOpen) return undefined;

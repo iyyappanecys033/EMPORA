@@ -68,14 +68,20 @@ const ProtectedRoute = ({ children, requiredRole, condition = true }) => {
 
 function AppContent() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [initialRegisterMode, setInitialRegisterMode] = useState(false);
   const { isApprover, isResolver, isAuditor, isAdmin, canViewAnalytics } = useAuth();
 
+  const handleOpenLogin = (isRegister = false) => {
+    setInitialRegisterMode(Boolean(isRegister));
+    setLoginModalOpen(true);
+  };
+
   return (
-    <AppLayout onOpenLogin={() => setLoginModalOpen(true)}>
+    <AppLayout onOpenLogin={handleOpenLogin}>
       <Suspense fallback={<LoadingSpinner message="Loading workspace..." />}>
         <Routes>
           {/* Core Service Management Routes */}
-          <Route path="/" element={<EmployeeDashboard onOpenLogin={() => setLoginModalOpen(true)} />} />
+          <Route path="/" element={<EmployeeDashboard onOpenLogin={handleOpenLogin} />} />
           <Route
             path="/catalog"
             element={
@@ -208,7 +214,11 @@ function AppContent() {
         </Routes>
       </Suspense>
 
-      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <LoginModal
+        isOpen={loginModalOpen}
+        initialRegister={initialRegisterMode}
+        onClose={() => setLoginModalOpen(false)}
+      />
     </AppLayout>
   );
 }

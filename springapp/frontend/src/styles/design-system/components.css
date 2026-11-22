@@ -1277,3 +1277,417 @@ html {
   }
 }
 
+/* ==========================================================================
+   WORKLYNX-INSPIRED ENTERPRISE ANIMATIONS & ADVANCED UI/UX SYSTEM
+   Ambient Mesh Blobs, Pulse Rings, High Hover Micro-Interactions,
+   Smooth Scroll Progress, Sticky Frosted Quick-Nav & Shimmer Sweeps
+   ========================================================================== */
+
+/* 1. Global Viewport Scroll Progress Bar */
+.ep-scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3.5px;
+  background: linear-gradient(90deg, #4f46e5 0%, #3b82f6 35%, #06b6d4 70%, #10b981 100%);
+  z-index: 99999;
+  transition: width 0.08s ease-out;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.65), 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+/* 2. Keyframes for Fluid Mesh, Pulse Radar & Floating */
+@keyframes ep-blob-float-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(35px, -45px) scale(1.12);
+  }
+  66% {
+    transform: translate(-30px, 30px) scale(0.92);
+  }
+}
+
+@keyframes ep-blob-float-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-40px, 35px) scale(1.08);
+  }
+  66% {
+    transform: translate(35px, -30px) scale(0.94);
+  }
+}
+
+@keyframes ep-blob-float-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(30px, 40px) scale(1.14);
+  }
+}
+
+@keyframes ep-pulse-ring {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.95);
+  }
+  60% {
+    opacity: 0.25;
+    transform: scale(2.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.9);
+  }
+}
+
+@keyframes ep-float-gentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes ep-float-delayed {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-11px);
+  }
+}
+
+@keyframes ep-shimmer-sweep {
+  0% {
+    transform: translateX(-150%) skewX(-25deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+}
+
+@keyframes ep-gradient-text-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 3. Ambient Background Mesh Blobs Container */
+.ep-ambient-mesh-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.ep-ambient-mesh-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ep-blob-sphere {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.28;
+  will-change: transform;
+}
+
+.ep-blob-sphere--primary {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, #6366f1 0%, rgba(99, 102, 241, 0) 70%);
+  top: -10%;
+  left: 15%;
+  animation: ep-blob-float-1 18s ease-in-out infinite;
+}
+
+.ep-blob-sphere--cyan {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, #06b6d4 0%, rgba(6, 182, 212, 0) 70%);
+  top: 30%;
+  right: 5%;
+  animation: ep-blob-float-2 22s ease-in-out infinite;
+}
+
+.ep-blob-sphere--purple {
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, #a855f7 0%, rgba(168, 85, 247, 0) 70%);
+  bottom: -15%;
+  left: 30%;
+  animation: ep-blob-float-3 20s ease-in-out infinite;
+}
+
+/* 4. Radar Wave Pulse Dot Component */
+.ep-radar-pulse-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.ep-radar-pulse-core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+.ep-radar-pulse-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #10b981;
+  animation: ep-pulse-ring 2.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+/* 5. Hero Gradient Shimmer Typography */
+.ep-hero-gradient-shimmer {
+  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 45%, #93c5fd 75%, #34d399 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ep-gradient-text-shimmer 8s ease infinite;
+}
+
+/* 6. Hero Floating Live Telemetry Cards */
+.ep-hero-floating-card {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 12px 18px;
+  color: #ffffff;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.45);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ep-hero-floating-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 20px 42px -6px rgba(99, 102, 241, 0.35);
+}
+
+.ep-float-animate-1 {
+  animation: ep-float-gentle 6s ease-in-out infinite;
+}
+
+.ep-float-animate-2 {
+  animation: ep-float-delayed 7s ease-in-out infinite;
+}
+
+/* 7. Advanced High-Hover Animated Cards */
+.ep-landing-card-glow {
+  position: relative;
+  overflow: hidden;
+  background: var(--ep-bg-surface, #ffffff);
+  border: 1px solid var(--ep-border, #e2e8f0);
+  border-radius: var(--ep-radius-lg, 16px);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s ease,
+              background-color 0.25s ease;
+}
+
+.ep-landing-card-glow:hover {
+  transform: translateY(-8px) scale(1.015);
+  box-shadow: 0 22px 45px -12px rgba(99, 102, 241, 0.22),
+              0 0 0 1px rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.45);
+}
+
+.ep-landing-card-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.18) 50%, transparent 100%);
+  pointer-events: none;
+  transform: skewX(-25deg);
+}
+
+.ep-landing-card-glow:hover::after {
+  animation: ep-shimmer-sweep 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ep-card-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
+}
+
+.ep-landing-card-glow:hover .ep-card-icon-badge {
+  transform: scale(1.14) rotate(4deg);
+}
+
+/* 8. Sticky Frosted Quick-Nav Bar */
+.ep-floating-quick-nav {
+  position: sticky;
+  top: 14px;
+  z-index: 60;
+  margin: 0 auto 36px;
+  max-width: 980px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--ep-border, #e2e8f0);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  box-shadow: 0 12px 32px -6px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme='dark'] .ep-floating-quick-nav {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 14px 36px -6px rgba(0, 0, 0, 0.5);
+}
+
+.ep-quick-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ep-quick-nav-links::-webkit-scrollbar {
+  display: none;
+}
+
+.ep-quick-nav-pill {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  color: var(--ep-text-secondary, #475569);
+  transition: all 0.22s ease;
+  white-space: nowrap;
+}
+
+.ep-quick-nav-pill:hover {
+  color: var(--ep-primary, #3730a3);
+  background: var(--ep-primary-subtle, #eef2ff);
+}
+
+.ep-quick-nav-pill--active {
+  color: #ffffff !important;
+  background: var(--ep-primary, #3730a3) !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+/* 9. Interactive Workflow Connected Stepper */
+.ep-workflow-pipeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+.ep-workflow-step-active-glow {
+  border-color: var(--ep-primary, #3730a3) !important;
+  box-shadow: 0 12px 28px -6px rgba(79, 70, 229, 0.28), 0 0 0 2px rgba(79, 70, 229, 0.25) !important;
+}
+
+/* 10. Shimmer Action Buttons */
+.ep-btn-shimmer {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.ep-btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-25deg);
+}
+
+.ep-btn-shimmer:hover::after {
+  animation: ep-shimmer-sweep 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 11. FAQ Smooth Chevron Transition */
+.ep-faq-chevron {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ep-faq-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* 12. Floating Back To Top Button */
+.ep-back-to-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ep-primary, #3730a3);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 25px -4px rgba(79, 70, 229, 0.45);
+  z-index: 99;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+}
+
+.ep-back-to-top:hover {
+  transform: translateY(-4px) scale(1.08);
+  background: var(--ep-primary-hover, #312e81);
+}
+
+@media (max-width: 768px) {
+  .ep-floating-quick-nav {
+    border-radius: 16px;
+    padding: 6px 8px;
+  }
+}
+
+
