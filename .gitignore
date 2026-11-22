@@ -20,6 +20,7 @@ node_modules/
 **/node_modules/
 springapp/frontend/build/
 springapp/frontend/node/
+springapp/backend/src/main/resources/static/
 springapp/springbackend/build/
 springapp/springbackend/node/
 .pnp
