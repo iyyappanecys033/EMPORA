@@ -7,6 +7,7 @@ import { StatusBadge, PriorityBadge } from '../common/Badge';
 import { DashboardSkeleton } from '../common/LoadingSkeleton';
 import Avatar from '../common/Avatar';
 import CreateTicketModal from '../tickets/CreateTicketModal';
+import PublicLandingPage from './PublicLandingPage';
 import {
   PlusIcon,
   TicketIcon,
@@ -72,46 +73,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
   };
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ maxWidth: '760px', margin: '28px auto' }}>
-        <div className="ep-hero" style={{ textAlign: 'center', padding: '44px 28px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: '9999px', background: 'rgba(255,255,255,0.14)', fontSize: '12px', fontWeight: 600, marginBottom: '16px' }}>
-            EMPORA — Employee Services &amp; Workflow Platform
-          </div>
-          <h1 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.1rem)', margin: '0 0 12px', fontWeight: 800 }}>
-            One platform. Connected operations.
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '15px', lineHeight: 1.6, maxWidth: '620px', margin: '0 auto 24px' }}>
-            A platform for managing employee services, approvals, cross-department workflows and organisational operations.
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            {onOpenLogin && (
-              <button
-                type="button"
-                onClick={onOpenLogin}
-                className="ep-btn ep-btn--primary"
-                style={{ backgroundColor: '#ffffff', color: '#1e1b4b', fontWeight: 700, padding: '12px 28px', fontSize: '15px' }}
-              >
-                Sign In to Workspace
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
-          {[
-            { title: 'Self-Service Catalog', desc: 'Standardized IT, HR, and Facilities offerings with transparent SLA targets.' },
-            { title: 'Real-Time Approvals', desc: 'Streamlined multi-stage managerial approvals with built-in governance.' },
-            { title: 'Cryptographic Audit Trail', desc: 'Tamper-evident SHA-256 lifecycle history for every enterprise action.' }
-          ].map((feat) => (
-            <div key={feat.title} className="ep-card">
-              <h2 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 700, color: 'var(--ep-text-primary)' }}>{feat.title}</h2>
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--ep-text-muted)', lineHeight: 1.5 }}>{feat.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <PublicLandingPage onOpenLogin={onOpenLogin} />;
   }
 
   if (loading) {
@@ -190,7 +152,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
 
       {/* Metrics Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div className="ep-card" style={{ borderLeft: '4px solid var(--ep-primary)' }}>
+        <div className="ep-card ep-interactive-card" style={{ borderLeft: '4px solid var(--ep-primary)' }}>
           <div style={metricLabelStyle}>Active Requests (Recent)</div>
           <div className="ep-tabular" style={{ ...metricValueStyle, color: 'var(--ep-primary)' }}>
             {activeRecentCount}
@@ -198,7 +160,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
           <div style={metricSubStyle}>Open in your latest 5 tickets</div>
         </div>
 
-        <div className="ep-card" style={{ borderLeft: '4px solid var(--ep-secondary)' }}>
+        <div className="ep-card ep-interactive-card" style={{ borderLeft: '4px solid var(--ep-secondary)' }}>
           <div style={metricLabelStyle}>Total Tickets</div>
           <div className="ep-tabular" style={{ ...metricValueStyle, color: 'var(--ep-text-primary)' }}>
             {totalTickets}
@@ -206,7 +168,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
           <div style={metricSubStyle}>All-time submitted requests</div>
         </div>
 
-        <div className="ep-card" style={{ borderLeft: `4px solid ${unreadCount > 0 ? 'var(--ep-warning)' : 'var(--ep-success)'}` }}>
+        <div className="ep-card ep-interactive-card" style={{ borderLeft: `4px solid ${unreadCount > 0 ? 'var(--ep-warning)' : 'var(--ep-success)'}` }}>
           <div style={metricLabelStyle}>Unread Notifications</div>
           <div className="ep-tabular" style={{ ...metricValueStyle, color: unreadCount > 0 ? 'var(--ep-warning)' : 'var(--ep-success)' }}>
             {unreadCount}
@@ -219,7 +181,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
         </div>
 
         {isApprover && (
-          <div className="ep-card" style={{ borderLeft: '4px solid var(--ep-warning)' }}>
+          <div className="ep-card ep-interactive-card" style={{ borderLeft: '4px solid var(--ep-warning)' }}>
             <div style={metricLabelStyle}>Manager Action</div>
             <Link to="/approvals" style={{ textDecoration: 'none', display: 'block', margin: '10px 0 4px', fontSize: '17px', fontWeight: 800, color: 'var(--ep-warning)' }}>
               Review Approvals &rarr;
@@ -229,7 +191,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
         )}
 
         {isResolver && (
-          <div className="ep-card" style={{ borderLeft: '4px solid var(--ep-success)' }}>
+          <div className="ep-card ep-interactive-card" style={{ borderLeft: '4px solid var(--ep-success)' }}>
             <div style={metricLabelStyle}>Specialist Workspace</div>
             <Link to={department ? `/queue/${department}` : '/queue/IT'} style={{ textDecoration: 'none', display: 'block', margin: '10px 0 4px', fontSize: '17px', fontWeight: 800, color: 'var(--ep-success)' }}>
               {department || 'IT'} Queue &rarr;
@@ -242,7 +204,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
       {/* Main Workspace Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '20px' }}>
         {/* Recent Tickets */}
-        <section className="ep-card" aria-labelledby="dash-tickets-heading">
+        <section className="ep-card ep-interactive-card" aria-labelledby="dash-tickets-heading">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <h2 id="dash-tickets-heading" style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>
               My Recent Tickets
@@ -303,7 +265,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
         </section>
 
         {/* Featured Services */}
-        <section className="ep-card" aria-labelledby="dash-catalog-heading">
+        <section className="ep-card ep-interactive-card" aria-labelledby="dash-catalog-heading">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <h2 id="dash-catalog-heading" style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>
               Featured Services
@@ -355,7 +317,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
         </section>
 
         {/* Notifications Preview */}
-        <section className="ep-card" aria-labelledby="dash-notifs-heading">
+        <section className="ep-card ep-interactive-card" aria-labelledby="dash-notifs-heading">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <h2 id="dash-notifs-heading" style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>
               Notifications Preview
