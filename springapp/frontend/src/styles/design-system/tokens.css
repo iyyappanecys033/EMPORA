@@ -128,8 +128,8 @@
   --ep-radius-full: 9999px;
 
   --ep-topbar-height: 60px;
-  --ep-sidebar-width: 248px;
-  --ep-sidebar-collapsed: 72px;
+  --ep-sidebar-width: 84px;
+  --ep-sidebar-collapsed: 84px;
 
   /* Density defaults (Comfortable) */
   --ep-cell-py: 12px;

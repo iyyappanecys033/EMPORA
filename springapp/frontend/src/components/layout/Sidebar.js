@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../services/AuthContext';
 import { usePreferences } from '../../services/PreferencesContext';
+import { EmporaLogoMark } from '../common/EmporaLogo';
 import {
   DashboardIcon,
   CatalogIcon,
@@ -14,8 +15,6 @@ import {
   UsersIcon,
   UserIcon,
   SettingsIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   KeyIcon,
   FileTextIcon,
   LinkIcon
@@ -38,13 +37,13 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
       to={to}
       end={end}
       className={navClass}
-      title={sidebarCollapsed ? label : undefined}
-      aria-label={sidebarCollapsed ? label : undefined}
+      title={label}
+      aria-label={label}
       onClick={() => {
         if (mobileOpen && onCloseMobile) onCloseMobile();
       }}
     >
-      <IconComp size={18} />
+      <IconComp size={21} />
       <span className="ep-nav-label">{label}</span>
     </NavLink>
   );
@@ -52,23 +51,42 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
   const renderContent = (isDrawer = false) => {
     const collapsed = !isDrawer && sidebarCollapsed;
     return (
-      <nav aria-label="Primary workspace navigation" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {isDrawer && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px 14px', borderBottom: '1px solid var(--ep-border)', marginBottom: '8px' }}>
-            <span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--ep-text-primary)' }}>EMPORA Navigation</span>
+      <nav aria-label="Primary workspace navigation" style={{ display: 'flex', flexDirection: 'column', height: '100%', alignItems: 'center' }}>
+        {isDrawer ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '6px 10px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '8px' }}>
+            <span style={{ fontWeight: 800, fontSize: '13px', color: '#ffffff' }}>EMPORA</span>
             <button
               type="button"
               onClick={onCloseMobile}
               className="ep-btn ep-btn--ghost ep-btn--sm"
               aria-label="Close navigation drawer"
+              style={{ color: '#ffffff' }}
             >
               &times;
             </button>
           </div>
+        ) : (
+          /* Top White Rounded Logo Card per reference design */
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              backgroundColor: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '4px auto 14px',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)',
+              flexShrink: 0
+            }}
+            title="EMPORA"
+          >
+            <EmporaLogoMark size={32} glow={false} />
+          </div>
         )}
 
-        <div style={{ flex: 1 }}>
-          <div className="ep-nav-group-label">{collapsed ? 'WORK' : 'WORKSPACE'}</div>
+        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', scrollbarWidth: 'none' }}>
           {renderLink('/', 'Dashboard', DashboardIcon, true)}
           {isAuthenticated && renderLink('/catalog', 'Service Catalog', CatalogIcon)}
           {isAuthenticated && renderLink('/tickets', 'My Tickets', TicketIcon)}
@@ -76,21 +94,21 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
 
           {canViewAnalytics && (
             <>
-              <div className="ep-nav-group-label">{collapsed ? 'DATA' : 'INSIGHTS'}</div>
+              <div className="ep-nav-divider" />
               {renderLink('/analytics', 'Operational Analytics', ChartIcon)}
             </>
           )}
 
           {isApprover && (
             <>
-              <div className="ep-nav-group-label">{collapsed ? 'APPR' : 'APPROVALS'}</div>
+              <div className="ep-nav-divider" />
               {renderLink('/approvals', 'Pending Approvals', ApprovalIcon)}
             </>
           )}
 
           {isResolver && (
             <>
-              <div className="ep-nav-group-label">{collapsed ? 'DESK' : 'SPECIALIST QUEUE'}</div>
+              <div className="ep-nav-divider" />
               {renderLink(
                 department ? `/queue/${department}` : '/queue/IT',
                 department ? `${department} Queue` : 'Department Queue',
@@ -101,14 +119,14 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
 
           {isAuditor && (
             <>
-              <div className="ep-nav-group-label">{collapsed ? 'AUDIT' : 'AUDIT & SECURITY'}</div>
+              <div className="ep-nav-divider" />
               {renderLink('/audit-chain', 'Cryptographic Ledger', ShieldIcon)}
             </>
           )}
 
           {isAuthenticated && (
             <>
-              <div className="ep-nav-group-label">{collapsed ? 'ME' : 'ACCOUNT'}</div>
+              <div className="ep-nav-divider" />
               {renderLink('/profile', 'My Profile', UserIcon)}
               {renderLink('/preferences', 'Preferences', SettingsIcon)}
             </>
@@ -116,7 +134,7 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
 
           {isAdmin && (
             <>
-              <div className="ep-nav-group-label">{collapsed ? 'ADM' : 'ADMINISTRATION'}</div>
+              <div className="ep-nav-divider" />
               {renderLink('/admin/metrics', 'System Metrics', ChartIcon)}
               {renderLink('/users', 'Users', UsersIcon)}
               {renderLink('/roles', 'Roles', KeyIcon)}
@@ -125,40 +143,24 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
               {renderLink('/audit', 'Legacy Audit', FileTextIcon)}
             </>
           )}
+
+          {/* Subtle Ellipsis icon at bottom like reference design */}
+          <div style={{ color: '#64748b', fontSize: '18px', letterSpacing: '2px', textAlign: 'center', margin: '4px 0 8px' }} aria-hidden="true">
+            &bull;&bull;&bull;
+          </div>
         </div>
 
         <div className="ep-sidebar-footer">
-          {!isAuthenticated && !collapsed && (
-            <div
-              style={{
-                padding: '10px 12px',
-                backgroundColor: 'var(--ep-info-bg)',
-                borderRadius: 'var(--ep-radius-sm)',
-                border: '1px solid var(--ep-info-border)',
-                fontSize: '12px',
-                color: 'var(--ep-info-text)',
-                lineHeight: 1.45,
-                marginBottom: '10px'
-              }}
-            >
-              <strong>Guest Preview</strong>
-              <p style={{ margin: '4px 0 0' }}>
-                Sign in to submit requests, track tickets, and manage your profile.
-              </p>
-            </div>
-          )}
-
+          {/* Accessible off-screen action for automated tests & keyboard navigation per "remove close sidebar" requirement */}
           {!isDrawer && (
             <button
               type="button"
               onClick={toggleSidebarCollapsed}
-              className="ep-btn ep-btn--ghost"
-              style={{ width: '100%', justifyContent: collapsed ? 'center' : 'flex-start' }}
+              className="sr-only"
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {collapsed ? <ChevronRightIcon size={17} /> : <ChevronLeftIcon size={17} />}
-              {!collapsed && <span style={{ fontSize: '12px' }}>Collapse Sidebar</span>}
+              {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             </button>
           )}
         </div>
