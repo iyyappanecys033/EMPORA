@@ -178,78 +178,40 @@ const PublicLandingPage = ({ onOpenLogin }) => {
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '880px', margin: '0 auto', textAlign: 'center' }}>
-          {/* Hero Brand Identity Lockup: 3D Beveled Sapphire "E" + Brand Title & Subtitle */}
+          {/* Hero Brand Identity Lockup (Clean, Unboxed, High-Tech Brand Lockup) */}
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '16px',
-              padding: '12px 28px 12px 14px',
-              borderRadius: '24px',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.22)',
-              boxShadow: '0 16px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
-              backdropFilter: 'blur(16px)',
-              marginBottom: '28px',
+              gap: '20px',
+              marginBottom: '32px',
               textAlign: 'left'
             }}
           >
-            {/* 3D Chiseled Metallic "E" Emblem Card */}
-            <div
-              style={{
-                width: '62px',
-                height: '62px',
-                borderRadius: '18px',
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.32) 0%, rgba(6, 182, 212, 0.26) 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.35)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 28px rgba(37, 99, 235, 0.45)',
-                backdropFilter: 'blur(12px)',
-                flexShrink: 0
-              }}
-            >
-              <EmporaLogoMark size={42} glow={true} />
-            </div>
+            {/* 3D Chiseled Metallic "E" Emblem */}
+            <EmporaLogoMark size={58} glow={true} />
 
-            {/* Brand Title & Platform Subtitle in Column right next to E */}
+            {/* Typography Lockup: EMPORA + Platform Subtitle */}
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', lineHeight: 1 }}>
-                <span
-                  style={{
-                    fontSize: 'clamp(1.75rem, 3.2vw, 2.35rem)',
-                    fontWeight: 900,
-                    letterSpacing: '-0.025em',
-                    color: '#ffffff',
-                    textShadow: '0 2px 16px rgba(0, 0, 0, 0.4)'
-                  }}
-                >
-                  EMPORA
-                </span>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    padding: '3px 8px',
-                    borderRadius: '9999px',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    background: 'rgba(56, 189, 248, 0.2)',
-                    color: '#38bdf8',
-                    border: '1px solid rgba(56, 189, 248, 0.45)'
-                  }}
-                >
-                  ENTERPRISE
-                </span>
-              </div>
               <span
                 style={{
-                  fontSize: 'clamp(11px, 1.2vw, 12.5px)',
-                  fontWeight: 700,
-                  color: 'rgba(224, 242, 254, 0.92)',
-                  letterSpacing: '0.08em',
+                  fontSize: 'clamp(2.4rem, 4.5vw, 3.2rem)',
+                  fontWeight: 800,
+                  letterSpacing: '-0.025em',
+                  lineHeight: 1.05,
+                  color: '#ffffff',
+                  textShadow: '0 4px 20px rgba(0, 0, 0, 0.4)'
+                }}
+              >
+                EMPORA
+              </span>
+              <span
+                style={{
+                  fontSize: 'clamp(10.5px, 1.2vw, 12.5px)',
+                  fontWeight: 600,
+                  letterSpacing: '0.14em',
                   textTransform: 'uppercase',
+                  color: '#93c5fd',
                   marginTop: '6px',
                   lineHeight: 1.2
                 }}
