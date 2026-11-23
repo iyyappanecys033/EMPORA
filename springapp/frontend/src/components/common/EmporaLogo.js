@@ -5,7 +5,6 @@ import React from 'react';
  * Precision chiseled multi-faceted metallic emblem inspired by the 3D EmpOpera brandmark.
  */
 export const EmporaLogoMark = ({ size = 36, glow = true, className = '' }) => {
-  const filterId = `ep-3d-glow-${size}`;
   const gradPrefix = `ep-3d-${size}`;
 
   return (

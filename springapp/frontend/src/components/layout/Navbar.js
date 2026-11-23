@@ -61,15 +61,17 @@ const Navbar = ({ onOpenLogin, onToggleMobileMenu, onOpenSearch, mobileMenuOpen 
   return (
     <header className="ep-topbar">
       <div className="ep-topbar-left">
-        <button
-          type="button"
-          className="ep-icon-btn ep-mobile-menu-btn"
-          onClick={onToggleMobileMenu}
-          aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-          aria-expanded={Boolean(mobileMenuOpen)}
-        >
-          <MenuIcon size={18} />
-        </button>
+        {isAuthenticated && (
+          <button
+            type="button"
+            className="ep-icon-btn ep-mobile-menu-btn"
+            onClick={onToggleMobileMenu}
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={Boolean(mobileMenuOpen)}
+          >
+            <MenuIcon size={18} />
+          </button>
+        )}
 
         <Link to="/" className="ep-brand" aria-label="EMPORA Enterprise Workspace Home">
           <span className="ep-brand-mark" aria-hidden="true" style={{ background: 'transparent', boxShadow: 'none' }}>

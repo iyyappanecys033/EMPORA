@@ -25,6 +25,10 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
   const { isAuthenticated, isAdmin, isAuditor, isResolver, isApprover, canViewAnalytics, department } = useAuth();
   const { sidebarCollapsed, toggleSidebarCollapsed } = usePreferences();
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const navClass = ({ isActive }) =>
     `ep-nav-link ${isActive ? 'ep-nav-link--active' : ''}`;
 

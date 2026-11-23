@@ -3,12 +3,15 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import Breadcrumb from '../common/Breadcrumb';
 import GlobalSearchModal from '../common/GlobalSearchModal';
+import { useAuth } from '../../services/AuthContext';
 
 const AppLayout = ({ children, onOpenLogin }) => {
+  const { isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) return undefined;
     const handleGlobalKeys = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -20,7 +23,7 @@ const AppLayout = ({ children, onOpenLogin }) => {
     };
     window.addEventListener('keydown', handleGlobalKeys);
     return () => window.removeEventListener('keydown', handleGlobalKeys);
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, isAuthenticated]);
 
   return (
     <div className="ep-shell">
@@ -35,19 +38,26 @@ const AppLayout = ({ children, onOpenLogin }) => {
         mobileMenuOpen={mobileMenuOpen}
       />
 
-      <div className="ep-body">
-        <Sidebar
-          mobileOpen={mobileMenuOpen}
-          onCloseMobile={() => setMobileMenuOpen(false)}
-        />
+      <div className={`ep-body ${!isAuthenticated ? 'ep-body--public' : ''}`}>
+        {isAuthenticated && (
+          <Sidebar
+            mobileOpen={mobileMenuOpen}
+            onCloseMobile={() => setMobileMenuOpen(false)}
+          />
+        )}
 
-        <main id="main-content" className="ep-main" tabIndex={-1}>
-          <Breadcrumb />
+        <main
+          id="main-content"
+          className={`ep-main ${!isAuthenticated ? 'ep-main--full' : ''}`}
+          tabIndex={-1}
+          style={!isAuthenticated ? { padding: 0, width: '100%', maxWidth: '100%' } : undefined}
+        >
+          {isAuthenticated && <Breadcrumb />}
           {children}
         </main>
       </div>
 
-      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      {isAuthenticated && <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />}
     </div>
   );
 };
