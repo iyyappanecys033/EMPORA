@@ -19,7 +19,6 @@ const PublicLandingPage = ({ onOpenLogin }) => {
   const [openFaq, setOpenFaq] = useState(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeSection, setActiveSection] = useState('overview');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,31 +33,11 @@ const PublicLandingPage = ({ onOpenLogin }) => {
       } else {
         setShowBackToTop(false);
       }
-
-      // Track active section for floating quick-nav
-      const sections = ['overview', 'features', 'roles', 'workflow', 'faq'];
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const el = document.getElementById(sections[i]);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top <= 180) {
-            setActiveSection(sections[i]);
-            break;
-          }
-        }
-      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToSection = useCallback((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   }, []);
 
   const scrollToTop = () => {
@@ -272,106 +251,20 @@ const PublicLandingPage = ({ onOpenLogin }) => {
             A high-performance enterprise workspace connecting employee service catalogs, multi-stage managerial governance, department fulfillment queues, and tamper-evident cryptographic audit ledgers.
           </p>
 
-          {/* Primary Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '20px' }}>
-            {onOpenLogin && (
-              <button
-                type="button"
-                onClick={() => onOpenLogin(false)}
-                className="ep-btn ep-btn--primary ep-btn-shimmer"
-                style={{
-                  backgroundColor: '#ffffff',
-                  color: '#1e1b4b',
-                  fontWeight: 800,
-                  padding: '14px 32px',
-                  fontSize: '15px',
-                  borderRadius: '12px',
-                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.35)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <LockIcon size={16} /> Sign In to Workspace <ArrowRightIcon size={16} />
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => scrollToSection('features')}
-              className="ep-btn"
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                color: '#ffffff',
-                border: '1px solid rgba(255, 255, 255, 0.24)',
-                fontWeight: 600,
-                padding: '14px 24px',
-                fontSize: '15px',
-                borderRadius: '12px',
-                backdropFilter: 'blur(8px)'
-              }}
-            >
-              Explore Capabilities &darr;
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. STICKY FLOATING QUICK-NAV WITH ACTIVE PILL HIGHLIGHT & FAST ACTION BUTTONS */}
-      <nav className="ep-floating-quick-nav ep-scroll-nav" aria-label="Landing page quick navigation">
-        <div className="ep-quick-nav-links">
-          {[
-            { id: 'overview', label: 'Overview' },
-            { id: 'features', label: 'Platform Capabilities' },
-            { id: 'roles', label: 'Role Architecture' },
-            { id: 'workflow', label: 'Workflow Engine' },
-            { id: 'faq', label: 'FAQ' }
-          ].map((sec) => (
-            <button
-              key={sec.id}
-              type="button"
-              onClick={() => scrollToSection(sec.id)}
-              className={`ep-quick-nav-pill ${activeSection === sec.id ? 'ep-quick-nav-pill--active' : ''}`}
-            >
-              {sec.label}
-            </button>
-          ))}
-        </div>
-
-        {onOpenLogin && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Accessible off-screen action for keyboard & automated tests */}
+          {onOpenLogin && (
             <button
               type="button"
               onClick={() => onOpenLogin(false)}
-              className="ep-btn ep-btn--primary ep-btn--sm ep-btn-shimmer"
-              style={{
-                padding: '7px 16px',
-                fontSize: '12.5px',
-                borderRadius: '9999px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+              className="sr-only"
             >
-              <LockIcon size={13} /> Sign In
+              Sign In to Workspace
             </button>
-            <button
-              type="button"
-              onClick={() => onOpenLogin(true)}
-              className="ep-btn ep-btn--secondary ep-btn--sm"
-              style={{
-                padding: '7px 14px',
-                fontSize: '12.5px',
-                borderRadius: '9999px'
-              }}
-            >
-              Register
-            </button>
-          </div>
-        )}
-      </nav>
+          )}
+        </div>
+      </section>
 
-      {/* 3. TRUST & PERFORMANCE METRICS */}
+      {/* 2. TRUST & PERFORMANCE METRICS */}
       <section style={{ margin: '32px 0 48px' }} aria-label="Enterprise platform metrics">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
           <div className="ep-stat-pill ep-landing-card-glow" style={{ padding: '24px' }}>
