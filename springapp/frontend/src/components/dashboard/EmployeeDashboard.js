@@ -140,11 +140,11 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
         </div>
       </div>
 
-      {/* Main Two-Column Canvas: Left (Cards 78%) + Right (Courses & Badges 22%) */}
+      {/* Main Two-Column Canvas: Left (Cards 78%) + Right (Workflows & Governance 22%) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 290px', gap: '24px', alignItems: 'start' }}>
         
         {/* ==================================================================== */}
-        {/* LEFT COLUMN: Recently Viewed + My Courses / Service Catalog          */}
+        {/* LEFT COLUMN: Recently Viewed + Service Catalog Offerings            */}
         {/* ==================================================================== */}
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '28px' }}>
           
