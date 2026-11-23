@@ -155,7 +155,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
                 Recently Viewed
               </h2>
               <Link to="/tickets" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ep-primary)', textDecoration: 'none' }}>
-                View All Tickets &rarr;
+                View All Tickets
               </Link>
             </div>
 
@@ -304,11 +304,11 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
             )}
           </section>
 
-          {/* SECTION 2: My Courses & Services (Catalog) */}
-          <section aria-labelledby="my-courses-heading">
+          {/* SECTION 2: Service Offerings & Catalog */}
+          <section aria-labelledby="service-offerings-heading">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
-              <h2 id="my-courses-heading" style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: 'var(--ep-text-primary)' }}>
-                My Courses &amp; Services
+              <h2 id="service-offerings-heading" style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: 'var(--ep-text-primary)' }}>
+                Service Offerings &amp; Catalog
               </h2>
 
               {/* Action Toolbar: Sort By + Filters button */}
@@ -482,10 +482,10 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
         </div>
 
         {/* ==================================================================== */}
-        {/* RIGHT COLUMN: Courses & Badges (Governance & Metrics Rail)           */}
+        {/* RIGHT COLUMN: Workflows & Governance (Operations & Metrics Rail)    */}
         {/* ==================================================================== */}
         <aside
-          aria-label="Courses & Badges Summary"
+          aria-label="Workflows & Governance Summary"
           style={{
             backgroundColor: 'var(--ep-bg-surface)',
             border: '1px solid var(--ep-border)',
@@ -500,16 +500,16 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
           {/* Header */}
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 4px', color: 'var(--ep-text-primary)' }}>
-              Courses &amp; Badges
+              Workflows &amp; Governance
             </h2>
             <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--ep-text-muted)' }}>
-              Live platform metrics &amp; SLA compliance
+              Live enterprise service metrics &amp; compliance
             </p>
           </div>
 
           {/* 4 Metric Pills matching reference design */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {/* 1. Courses Enrolled */}
+            {/* 1. Active Requests */}
             <div
               style={{
                 display: 'flex',
@@ -535,18 +535,18 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
                     fontSize: '14px'
                   }}
                 >
-                  📜
+                  🗂
                 </div>
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ep-text-secondary)' }}>
-                  Courses Enrolled
+                  Active Requests
                 </span>
               </div>
               <span className="ep-tabular" style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ep-text-primary)' }}>
-                {totalTickets > 0 ? totalTickets : 11}
+                {totalTickets > 0 ? totalTickets : 4}
               </span>
             </div>
 
-            {/* 2. Courses Completed */}
+            {/* 2. Resolved Workflows */}
             <div
               style={{
                 display: 'flex',
@@ -564,18 +564,18 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
                     width: '32px',
                     height: '32px',
                     borderRadius: '9999px',
-                    backgroundColor: '#dbeafe',
-                    color: '#2563eb',
+                    backgroundColor: '#d1fae5',
+                    color: '#059669',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '14px'
                   }}
                 >
-                  🎓
+                  ✅
                 </div>
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ep-text-secondary)' }}>
-                  Courses Completed
+                  Resolved Workflows
                 </span>
               </div>
               <span className="ep-tabular" style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ep-text-primary)' }}>
@@ -583,7 +583,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
               </span>
             </div>
 
-            {/* 3. Badges */}
+            {/* 3. SLA Compliance */}
             <div
               style={{
                 display: 'flex',
@@ -609,18 +609,18 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
                     fontSize: '14px'
                   }}
                 >
-                  🎖
+                  ⚡
                 </div>
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ep-text-secondary)' }}>
-                  Badges
+                  SLA Compliance
                 </span>
               </div>
               <span className="ep-tabular" style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb' }}>
-                13072
+                99.8%
               </span>
             </div>
 
-            {/* 4. Super Badges */}
+            {/* 4. Audit Integrity */}
             <div
               style={{
                 display: 'flex',
@@ -646,14 +646,14 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
                     fontSize: '14px'
                   }}
                 >
-                  ⭐
+                  🛡
                 </div>
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ep-text-secondary)' }}>
-                  Super Badges
+                  Audit Integrity
                 </span>
               </div>
-              <span className="ep-tabular" style={{ fontSize: '16px', fontWeight: 800, color: '#7c3aed' }}>
-                27748
+              <span className="ep-tabular" style={{ fontSize: '14.5px', fontWeight: 800, color: '#7c3aed' }}>
+                100% SHA256
               </span>
             </div>
           </div>
@@ -681,7 +681,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
                 }}
               >
                 <span>Pending Approvals</span>
-                <span style={{ fontSize: '11.5px' }}>Review Approvals &rarr;</span>
+                <span style={{ fontSize: '11.5px' }}>Review Approvals</span>
               </Link>
             )}
 
@@ -702,7 +702,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
                 }}
               >
                 <span>{department || 'IT'} Queue</span>
-                <span style={{ fontSize: '11.5px' }}>Triage &rarr;</span>
+                <span style={{ fontSize: '11.5px' }}>Triage</span>
               </Link>
             )}
 
@@ -723,7 +723,7 @@ const EmployeeDashboard = ({ onOpenLogin }) => {
             >
               <span>Alerts Inbox</span>
               <span style={{ fontSize: '11.5px', color: 'var(--ep-primary)' }}>
-                {unreadCount > 0 ? `${unreadCount} unread` : 'View &rarr;'}
+                {unreadCount > 0 ? `${unreadCount} unread` : 'View Inbox'}
               </span>
             </Link>
           </div>
