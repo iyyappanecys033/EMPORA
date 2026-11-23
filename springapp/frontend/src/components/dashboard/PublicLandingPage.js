@@ -8,9 +8,7 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ZapIcon,
-  ArrowRightIcon,
-  ArrowUpIcon,
-  LockIcon
+  ArrowUpIcon
 } from '../common/Icons';
 
 const PublicLandingPage = ({ onOpenLogin }) => {
@@ -180,48 +178,84 @@ const PublicLandingPage = ({ onOpenLogin }) => {
         </div>
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '880px', margin: '0 auto', textAlign: 'center' }}>
-          {/* Prominent Glowing Brand Logo & Enterprise Badge */}
-          <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+          {/* Hero Brand Identity Lockup: 3D Beveled Sapphire "E" + Brand Title & Subtitle */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '16px',
+              padding: '12px 28px 12px 14px',
+              borderRadius: '24px',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.22)',
+              boxShadow: '0 16px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+              backdropFilter: 'blur(16px)',
+              marginBottom: '28px',
+              textAlign: 'left'
+            }}
+          >
+            {/* 3D Chiseled Metallic "E" Emblem Card */}
             <div
               style={{
-                width: '64px',
-                height: '64px',
+                width: '62px',
+                height: '62px',
                 borderRadius: '18px',
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.28)',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.32) 0%, rgba(6, 182, 212, 0.26) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 8px 32px rgba(79, 70, 229, 0.35)',
+                boxShadow: '0 8px 28px rgba(37, 99, 235, 0.45)',
                 backdropFilter: 'blur(12px)',
-                marginBottom: '14px',
-                transition: 'transform 0.3s ease'
+                flexShrink: 0
               }}
             >
               <EmporaLogoMark size={42} glow={true} />
             </div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 18px',
-                borderRadius: '9999px',
-                background: 'rgba(255, 255, 255, 0.12)',
-                border: '1px solid rgba(255, 255, 255, 0.24)',
-                fontSize: '12px',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                backdropFilter: 'blur(8px)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)'
-              }}
-            >
-              <span className="ep-radar-pulse-wrap" aria-hidden="true">
-                <span className="ep-radar-pulse-core" />
-                <span className="ep-radar-pulse-wave" />
+
+            {/* Brand Title & Platform Subtitle in Column right next to E */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', lineHeight: 1 }}>
+                <span
+                  style={{
+                    fontSize: 'clamp(1.75rem, 3.2vw, 2.35rem)',
+                    fontWeight: 900,
+                    letterSpacing: '-0.025em',
+                    color: '#ffffff',
+                    textShadow: '0 2px 16px rgba(0, 0, 0, 0.4)'
+                  }}
+                >
+                  EMPORA
+                </span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    padding: '3px 8px',
+                    borderRadius: '9999px',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    background: 'rgba(56, 189, 248, 0.2)',
+                    color: '#38bdf8',
+                    border: '1px solid rgba(56, 189, 248, 0.45)'
+                  }}
+                >
+                  ENTERPRISE
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: 'clamp(11px, 1.2vw, 12.5px)',
+                  fontWeight: 700,
+                  color: 'rgba(224, 242, 254, 0.92)',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  marginTop: '6px',
+                  lineHeight: 1.2
+                }}
+              >
+                Employee Services &amp; Workflow Platform
               </span>
-              <span>EMPORA &bull; Employee Services &amp; Workflow Platform</span>
             </div>
           </div>
 
@@ -233,7 +267,8 @@ const PublicLandingPage = ({ onOpenLogin }) => {
               lineHeight: 1.15,
               margin: '0 0 16px',
               letterSpacing: '-0.025em',
-              textShadow: '0 4px 20px rgba(0, 0, 0, 0.35)'
+              textShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+              color: '#ffffff'
             }}
           >
             One platform. Connected operations.
@@ -622,7 +657,15 @@ const PublicLandingPage = ({ onOpenLogin }) => {
         }}
       >
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(1.7rem, 3.2vw, 2.4rem)', fontWeight: 800, margin: '0 0 16px' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.7rem, 3.2vw, 2.4rem)',
+              fontWeight: 800,
+              margin: '0 0 16px',
+              color: '#ffffff',
+              textShadow: '0 2px 14px rgba(0, 0, 0, 0.45)'
+            }}
+          >
             Ready to Connect Your Enterprise Operations?
           </h2>
           <p style={{ fontSize: '15.5px', color: 'rgba(255, 255, 255, 0.9)', margin: '0 auto 32px', lineHeight: 1.65 }}>
@@ -644,11 +687,10 @@ const PublicLandingPage = ({ onOpenLogin }) => {
                   borderRadius: '12px',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                   display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  alignItems: 'center'
                 }}
               >
-                Launch Workspace &rarr;
+                Launch Workspace
               </button>
             )}
 
@@ -668,7 +710,7 @@ const PublicLandingPage = ({ onOpenLogin }) => {
                   backdropFilter: 'blur(12px)'
                 }}
               >
-                Create Account &rarr;
+                Create Account
               </button>
             )}
           </div>
