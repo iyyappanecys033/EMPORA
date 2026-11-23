@@ -97,6 +97,51 @@ const Navbar = ({ onOpenLogin, onToggleMobileMenu, onOpenSearch, mobileMenuOpen 
         )}
       </div>
 
+      {!isAuthenticated && (
+        <nav
+          className="ep-topbar-center"
+          aria-label="Public sections navigation"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'var(--ep-bg-subtle, rgba(255,255,255,0.06))',
+            padding: '3px 8px',
+            borderRadius: '9999px',
+            border: '1px solid var(--ep-border)'
+          }}
+        >
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'features', label: 'Platform Capabilities' },
+            { id: 'roles', label: 'Role Architecture' },
+            { id: 'workflow', label: 'Workflow Engine' },
+            { id: 'faq', label: 'FAQ' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                const el = document.getElementById(item.id);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="ep-btn ep-btn--ghost ep-btn--sm"
+              style={{
+                borderRadius: '9999px',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                padding: '5px 12px',
+                color: 'var(--ep-text-secondary)',
+                border: 'none',
+                background: 'transparent'
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      )}
+
       <div className="ep-topbar-right">
         <button
           type="button"

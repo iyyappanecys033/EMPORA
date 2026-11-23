@@ -459,30 +459,9 @@ const PublicLandingPage = ({ onOpenLogin }) => {
               ))}
             </div>
 
-            <div style={{ background: 'var(--ep-primary-subtle)', border: '1px solid var(--ep-primary-border)', borderRadius: '10px', padding: '14px 18px', fontSize: '13px', color: 'var(--ep-selected-text)', marginBottom: '20px' }}>
+            <div style={{ background: 'var(--ep-primary-subtle)', border: '1px solid var(--ep-primary-border)', borderRadius: '10px', padding: '14px 18px', fontSize: '13px', color: 'var(--ep-selected-text)' }}>
               <strong>Zero-Trust Security Boundary:</strong> {rolesData[activeRole].security}
             </div>
-
-            {onOpenLogin && (
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => onOpenLogin(false)}
-                  className="ep-btn ep-btn--primary ep-btn-shimmer"
-                  style={{
-                    borderRadius: '10px',
-                    padding: '11px 24px',
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <LockIcon size={15} /> Sign In as {rolesData[activeRole].title} <ArrowRightIcon size={15} />
-                </button>
-              </div>
-            )}
           </div>
         )}
       </section>

@@ -98,6 +98,18 @@ a {
   min-width: 0;
 }
 
+.ep-topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 992px) {
+  .ep-topbar-center {
+    display: none !important;
+  }
+}
+
 .ep-brand {
   display: inline-flex;
   align-items: center;
