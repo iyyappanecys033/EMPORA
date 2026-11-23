@@ -364,20 +364,6 @@ const LoginModal = ({ isOpen, onClose, initialRegister = false }) => {
             </span>
           )}
         </div>
-
-        {/* Security & Trust Footer */}
-        <div
-          style={{
-            marginTop: '20px',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--ep-border)',
-            textAlign: 'center',
-            fontSize: '11.5px',
-            color: 'var(--ep-text-muted)'
-          }}
-        >
-          <span>🔒 256-Bit Encrypted Session &bull; OWASP Top 10 Protected &bull; HttpOnly JWT</span>
-        </div>
       </div>
     </div>
   );
