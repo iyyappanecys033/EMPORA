@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../services/AuthContext';
 import Alert from './common/Alert';
+import { EmporaLogoMark } from './common/EmporaLogo';
 
 const EyeIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -116,14 +117,14 @@ const LoginModal = ({ isOpen, onClose, initialRegister = false }) => {
               className="ep-brand-mark"
               aria-hidden="true"
               style={{
-                width: '38px',
-                height: '38px',
-                fontSize: '18px',
-                background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
-                boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)'
+                background: 'transparent',
+                boxShadow: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
-              E
+              <EmporaLogoMark size={36} glow={true} />
             </span>
             <div>
               <h2 id="empora-auth-title" style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: 'var(--ep-text-primary)', letterSpacing: '-0.02em' }}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { EmporaLogoMark } from '../common/EmporaLogo';
 import {
   CatalogIcon,
   ApprovalIcon,
@@ -9,8 +10,7 @@ import {
   ZapIcon,
   ArrowRightIcon,
   ArrowUpIcon,
-  LockIcon,
-  UserIcon
+  LockIcon
 } from '../common/Icons';
 
 const PublicLandingPage = ({ onOpenLogin }) => {
@@ -191,7 +191,7 @@ const PublicLandingPage = ({ onOpenLogin }) => {
         aria-label="Page scroll progress"
       />
 
-      {/* 1. HERO SECTION WITH AMBIENT BLOBS & FLOATING LIVE CARDS */}
+      {/* 1. HERO SECTION WITH PROMINENT LOGO, CLEAN SPACING & LIVE OPERATIONS SHOWCASE */}
       <section id="overview" className="ep-landing-hero ep-ambient-mesh-wrap" aria-label="EMPORA platform introduction">
         {/* Animated Background Mesh Blobs */}
         <div className="ep-ambient-mesh-bg" aria-hidden="true">
@@ -200,36 +200,56 @@ const PublicLandingPage = ({ onOpenLogin }) => {
           <div className="ep-blob-sphere ep-blob-sphere--purple" />
         </div>
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '920px', margin: '0 auto', textAlign: 'center' }}>
-          {/* Radar Wave Pulse Badge */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '6px 18px',
-              borderRadius: '9999px',
-              background: 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.22)',
-              fontSize: '12px',
-              fontWeight: 700,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              marginBottom: '24px',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}
-          >
-            <span className="ep-radar-pulse-wrap" aria-hidden="true">
-              <span className="ep-radar-pulse-core" />
-              <span className="ep-radar-pulse-wave" />
-            </span>
-            <span>EMPORA &bull; Employee Services &amp; Workflow Platform</span>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '880px', margin: '0 auto', textAlign: 'center' }}>
+          {/* Prominent Glowing Brand Logo & Enterprise Badge */}
+          <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '18px',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.28)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 32px rgba(79, 70, 229, 0.35)',
+                backdropFilter: 'blur(12px)',
+                marginBottom: '14px',
+                transition: 'transform 0.3s ease'
+              }}
+            >
+              <EmporaLogoMark size={42} glow={true} />
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 18px',
+                borderRadius: '9999px',
+                background: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.24)',
+                fontSize: '12px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)'
+              }}
+            >
+              <span className="ep-radar-pulse-wrap" aria-hidden="true">
+                <span className="ep-radar-pulse-core" />
+                <span className="ep-radar-pulse-wave" />
+              </span>
+              <span>EMPORA &bull; Employee Services &amp; Workflow Platform</span>
+            </div>
           </div>
 
-          {/* Dynamic Headline with Gradient Shimmer */}
+          {/* Dynamic Headline with Refined Typography */}
           <h1
             style={{
-              fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
+              fontSize: 'clamp(2.4rem, 5vw, 3.6rem)',
               fontWeight: 800,
               lineHeight: 1.15,
               margin: '0 0 16px',
@@ -242,18 +262,18 @@ const PublicLandingPage = ({ onOpenLogin }) => {
 
           <p
             style={{
-              fontSize: 'clamp(1rem, 1.8vw, 1.2rem)',
+              fontSize: 'clamp(1rem, 1.6vw, 1.18rem)',
               lineHeight: 1.65,
               color: 'rgba(255, 255, 255, 0.92)',
-              maxWidth: '720px',
+              maxWidth: '680px',
               margin: '0 auto 32px'
             }}
           >
             A high-performance enterprise workspace connecting employee service catalogs, multi-stage managerial governance, department fulfillment queues, and tamper-evident cryptographic audit ledgers.
           </p>
 
-          {/* Dual Action Buttons (Sign In / Register / Capabilities) */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '32px' }}>
+          {/* Primary Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '36px' }}>
             {onOpenLogin && (
               <button
                 type="button"
@@ -276,140 +296,155 @@ const PublicLandingPage = ({ onOpenLogin }) => {
               </button>
             )}
 
-            {onOpenLogin && (
-              <button
-                type="button"
-                onClick={() => onOpenLogin(true)}
-                className="ep-btn ep-btn-shimmer"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.14)',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.28)',
-                  fontWeight: 700,
-                  padding: '14px 28px',
-                  fontSize: '15px',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(12px)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <UserIcon size={16} /> Register Enterprise Account
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => scrollToSection('features')}
               className="ep-btn"
               style={{
-                backgroundColor: 'transparent',
-                color: 'rgba(255, 255, 255, 0.85)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.24)',
                 fontWeight: 600,
-                padding: '14px 22px',
+                padding: '14px 24px',
                 fontSize: '15px',
-                borderRadius: '12px'
+                borderRadius: '12px',
+                backdropFilter: 'blur(8px)'
               }}
             >
               Explore Capabilities &darr;
             </button>
           </div>
 
-          {/* Floating Live Telemetry Cards Preview */}
+          {/* Clean, High-Impact Live Operations Console Showcase */}
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '12px',
-              flexWrap: 'wrap',
-              marginBottom: '28px'
-            }}
-          >
-            <div className="ep-hero-floating-card ep-float-animate-1">
-              <span className="ep-radar-pulse-wrap" aria-hidden="true">
-                <span className="ep-radar-pulse-core" />
-                <span className="ep-radar-pulse-wave" />
-              </span>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#34d399' }}>SLA Target: 99.8% Met</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>&bull; MTTR &lt; 4.2h</span>
-            </div>
-
-            <div className="ep-hero-floating-card ep-float-animate-2">
-              <ShieldIcon size={16} style={{ color: '#818cf8' }} />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#c7d2fe' }}>SHA-256 Audit Ledger</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>&bull; 0 Anomalies</span>
-            </div>
-
-            <div className="ep-hero-floating-card ep-float-animate-1">
-              <ApprovalIcon size={16} style={{ color: '#fbbf24' }} />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#fde68a' }}>Multi-Stage Governance</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>&bull; Anti-Self-Approval Active</span>
-            </div>
-          </div>
-
-          {/* 3 Authentic Enterprise Architectural Cards */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '14px',
+              background: 'rgba(15, 23, 42, 0.55)',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              borderRadius: '16px',
+              padding: '24px 28px',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
               textAlign: 'left',
-              marginTop: '8px'
+              maxWidth: '820px',
+              margin: '0 auto'
             }}
           >
+            {/* Console Header Bar */}
             <div
               style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                borderRadius: '12px',
-                padding: '18px 20px',
-                backdropFilter: 'blur(10px)',
-                transition: 'transform 0.25s ease, background-color 0.25s ease'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '18px',
+                paddingBottom: '12px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818cf8', fontWeight: 700, fontSize: '13.5px', marginBottom: '6px' }}>
-                <CatalogIcon size={16} /> Enterprise Blueprint
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444' }} />
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#eab308' }} />
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }} />
+                <span style={{ fontSize: '12.5px', color: 'rgba(255, 255, 255, 0.85)', fontWeight: 600, marginLeft: '6px' }}>
+                  EMPORA Operational Command Console
+                </span>
               </div>
-              <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.5 }}>
-                Unified multi-department request catalog with automated SLA countdown and precision tracking.
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#34d399', fontWeight: 600 }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
+                System Active
               </div>
             </div>
 
-            <div
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                borderRadius: '12px',
-                padding: '18px 20px',
-                backdropFilter: 'blur(10px)',
-                transition: 'transform 0.25s ease, background-color 0.25s ease'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#34d399', fontWeight: 700, fontSize: '13.5px', marginBottom: '6px' }}>
-                <ApprovalIcon size={16} /> Multi-Stage Governance
+            {/* 3 Balanced Key Metrics */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '18px' }}>
+              <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '14px 16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <ClockIcon size={13} style={{ color: '#34d399' }} /> SLA Compliance
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#34d399', marginTop: '4px' }}>99.8% Met</div>
+                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', marginTop: '2px' }}>Avg MTTR &lt; 4.2 Hours</div>
               </div>
-              <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.5 }}>
-                Sequential line-manager authorizations with Segregation of Duties (SoD) consensus.
+
+              <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '14px 16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <ShieldIcon size={13} style={{ color: '#c7d2fe' }} /> SHA-256 Ledger
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#c7d2fe', marginTop: '4px' }}>Immutable</div>
+                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', marginTop: '2px' }}>0 Chain Tamper Anomalies</div>
+              </div>
+
+              <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '14px 16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <ApprovalIcon size={13} style={{ color: '#fde68a' }} /> Governance
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#fde68a', marginTop: '4px' }}>2-Stage Review</div>
+                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', marginTop: '2px' }}>Line Mgr &bull; HR Authority</div>
               </div>
             </div>
 
+            {/* Live Sample Request Stream Snippet */}
             <div
               style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                borderRadius: '12px',
-                padding: '18px 20px',
-                backdropFilter: 'blur(10px)',
-                transition: 'transform 0.25s ease, background-color 0.25s ease'
+                background: 'rgba(255, 255, 255, 0.04)',
+                borderRadius: '10px',
+                padding: '14px 18px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fbbf24', fontWeight: 700, fontSize: '13.5px', marginBottom: '6px' }}>
-                <ShieldIcon size={16} /> Tamper-Evident Ledger
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(99, 102, 241, 0.25)',
+                      color: '#c7d2fe',
+                      border: '1px solid rgba(99, 102, 241, 0.35)'
+                    }}
+                  >
+                    TKT-2026-000108
+                  </span>
+                  <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#ffffff' }}>
+                    Apple MacBook Pro M3 Max &amp; Cloud Dev Sandbox
+                  </span>
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.65)', marginTop: '4px' }}>
+                  Requester: <strong>Sarah Connor (Senior Engineer)</strong> &bull; Dept: <strong>Engineering</strong>
+                </div>
               </div>
-              <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.5 }}>
-                Cryptographic SHA-256 event chaining ensuring unalterable SOX and ISO 27001 audit records.
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span
+                  style={{
+                    fontSize: '11.5px',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    background: 'rgba(52, 211, 153, 0.15)',
+                    color: '#34d399',
+                    border: '1px solid rgba(52, 211, 153, 0.3)',
+                    fontWeight: 600
+                  }}
+                >
+                  ✓ Manager Approved
+                </span>
+                <span
+                  style={{
+                    fontSize: '11.5px',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    background: 'rgba(251, 191, 36, 0.15)',
+                    color: '#fbbf24',
+                    border: '1px solid rgba(251, 191, 36, 0.3)',
+                    fontWeight: 600
+                  }}
+                >
+                  ⏳ IT Fulfillment
+                </span>
               </div>
             </div>
           </div>

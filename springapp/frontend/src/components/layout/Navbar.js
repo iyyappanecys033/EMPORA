@@ -4,6 +4,7 @@ import { useAuth } from '../../services/AuthContext';
 import { usePreferences } from '../../services/PreferencesContext';
 import NotificationBell from '../notifications/NotificationBell';
 import Avatar from '../common/Avatar';
+import { EmporaLogoMark } from '../common/EmporaLogo';
 import {
   MenuIcon,
   SearchIcon,
@@ -71,7 +72,9 @@ const Navbar = ({ onOpenLogin, onToggleMobileMenu, onOpenSearch, mobileMenuOpen 
         </button>
 
         <Link to="/" className="ep-brand" aria-label="EMPORA Enterprise Workspace Home">
-          <span className="ep-brand-mark" aria-hidden="true">E</span>
+          <span className="ep-brand-mark" aria-hidden="true" style={{ background: 'transparent', boxShadow: 'none' }}>
+            <EmporaLogoMark size={32} glow={true} />
+          </span>
           <span>
             <span className="ep-brand-title">EMPORA</span>
             <span className="ep-brand-sub">Employee Services &amp; Workflow</span>
