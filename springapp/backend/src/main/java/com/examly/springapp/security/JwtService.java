@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,15 @@ public class JwtService {
 
     @Value("${jwt.expiration:900000}")
     private long jwtExpiration;
+
+    @PostConstruct
+    void validateSigningKey() {
+        try {
+            Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(secretKey));
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("JWT_SECRET must be valid Base64 encoding of at least 32 bytes", e);
+        }
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

@@ -144,10 +144,6 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
             </>
           )}
 
-          {/* Subtle Ellipsis icon at bottom like reference design */}
-          <div style={{ color: '#64748b', fontSize: '18px', letterSpacing: '2px', textAlign: 'center', margin: '4px 0 8px' }} aria-hidden="true">
-            &bull;&bull;&bull;
-          </div>
         </div>
 
         <div className="ep-sidebar-footer">

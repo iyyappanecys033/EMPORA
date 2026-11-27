@@ -27,7 +27,7 @@ const PreferencesPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: '860px' }}>
+    <div>
       <div className="ep-page-header">
         <div>
           <h1 className="ep-page-title">Preferences &amp; Accessibility</h1>

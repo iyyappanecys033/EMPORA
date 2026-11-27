@@ -273,7 +273,7 @@ const Navbar = ({ onOpenLogin, onToggleMobileMenu, onOpenSearch, mobileMenuOpen 
             </div>
           </>
         ) : (
-          <button type="button" onClick={onOpenLogin} className="ep-btn ep-btn--primary">
+          <button type="button" onClick={() => onOpenLogin(false)} className="ep-btn ep-btn--primary">
             Sign In / Register
           </button>
         )}

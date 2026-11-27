@@ -1,4 +1,4 @@
-// EPAMS P9 End-to-End Browser Test Specification (E2E-01 through E2E-08)
+// EPAMS P9 End-to-End Browser Test Specification (E2E-01 through E2E-09)
 // Covers real browser cookie security, CSRF header propagation, multi-persona ticket
 // lifecycle, approval enforcement, internal comment privacy, notifications, analytics,
 // and cryptographic audit verification.
@@ -10,48 +10,136 @@
 
 const { test, expect } = require('@playwright/test');
 
+const ADMIN_CREDENTIALS = {
+  username: process.env.E2E_ADMIN_USER || 'admin',
+  password: process.env.E2E_ADMIN_PASS || 'admin123'
+};
+
 const CREDENTIALS = {
-  admin: {
-    username: process.env.E2E_ADMIN_USER || 'admin',
-    password: process.env.E2E_ADMIN_PASS || 'admin123'
-  },
+  admin: ADMIN_CREDENTIALS,
   employee: {
     username: process.env.E2E_EMPLOYEE_USER || 'john_doe',
     password: process.env.E2E_EMPLOYEE_PASS || 'user123'
   },
-  manager: {
-    username: process.env.E2E_MANAGER_USER || 'mgr_carol',
-    password: process.env.E2E_MANAGER_PASS || 'Password123!'
-  },
-  specialist: {
-    username: process.env.E2E_SPECIALIST_USER || 'it_dave',
-    password: process.env.E2E_SPECIALIST_PASS || 'Password123!'
-  },
-  auditor: {
-    username: process.env.E2E_AUDITOR_USER || 'auditor_eve',
-    password: process.env.E2E_AUDITOR_PASS || 'Password123!'
-  }
 };
 
 async function loginViaUi(page, username, password) {
   await page.goto('/');
-  const signInBtn = page.getByRole('button', { name: /Sign In/i });
+  const signInBtn = page.getByRole('button', { name: 'Sign In / Register' });
   await expect(signInBtn).toBeVisible();
   await signInBtn.click();
 
-  await page.getByPlaceholder('e.g. admin').fill(username);
-  await page.getByPlaceholder('••••••••').fill(password);
-  await page.getByRole('button', { name: /Sign In|Authenticate|Login/i }).last().click();
+  const usernameInput = page.getByLabel('Username *');
+  const passwordInput = page.getByLabel('Password *');
+  await usernameInput.fill(username);
+  await passwordInput.fill(password);
+  await expect(usernameInput).toHaveValue(username);
+  await expect(passwordInput).toHaveValue(password);
+  await page.getByRole('dialog').getByRole('button', { name: 'Sign In', exact: true }).click();
 
-  await expect(page.getByRole('button', { name: /Sign Out|Logout/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Account and profile menu/i })).toBeVisible();
 }
 
 async function logoutViaUi(page) {
-  const logoutBtn = page.getByRole('button', { name: /Sign Out|Logout/i });
-  if (await logoutBtn.isVisible()) {
-    await logoutBtn.click();
-    await expect(page.getByRole('button', { name: /Sign In/i })).toBeVisible();
+  const accountMenu = page.getByRole('button', { name: /Account and profile menu/i });
+  if (await accountMenu.isVisible()) {
+    await accountMenu.click();
+    await page.getByRole('menuitem', { name: /Sign Out/i }).click();
+    await expect(page.getByRole('button', { name: 'Sign In / Register' })).toBeVisible();
   }
+}
+
+async function createApprovalTicket(page, testCase) {
+  await loginViaUi(page, CREDENTIALS.employee.username, CREDENTIALS.employee.password);
+  await page.goto('/catalog');
+  await expect(page.getByRole('heading', { name: /Service Catalog/i })).toBeVisible();
+  await page.getByRole('button', { name: /Custom Request/i }).click();
+
+  const approvalOption = page.locator('#serviceOfferingSelect option').filter({
+    hasText: 'Developer Workstation Laptop Upgrade'
+  });
+  await expect(approvalOption).toHaveCount(1);
+  await page.locator('#serviceOfferingSelect').selectOption(await approvalOption.getAttribute('value'));
+  await expect(page.getByText(/Requires Manager Approval/)).toBeVisible();
+
+  const description = `Playwright ${testCase} approval journey ${Date.now()}`;
+  await page.getByLabel('Business Justification & Details *').fill(description);
+  const createResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/v1/tickets') &&
+    response.request().method() === 'POST'
+  );
+  await page.getByRole('button', { name: /Submit Ticket/i }).click();
+  const response = await createResponse;
+  expect(response.ok()).toBeTruthy();
+  const ticket = await response.json();
+  expect(ticket.ticketNumber).toBeTruthy();
+  expect(ticket.id).toBeTruthy();
+  expect(ticket.status).toBe('PENDING_APPROVAL');
+  const approvalHistory = await page.evaluate(async (ticketId) => {
+    const historyResponse = await fetch(`/api/v1/approvals/tickets/${ticketId}`, {
+      credentials: 'include'
+    });
+    return {
+      status: historyResponse.status,
+      tasks: historyResponse.ok ? await historyResponse.json() : []
+    };
+  }, ticket.id);
+  expect(approvalHistory.status).toBe(200);
+  expect(approvalHistory.tasks).toHaveLength(1);
+  expect(approvalHistory.tasks[0].status).toBe('PENDING');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.goto('/tickets');
+  await expect(page.getByText(description, { exact: true })).toBeVisible();
+  await logoutViaUi(page);
+  return {
+    ...ticket,
+    description,
+    approvalTaskId: approvalHistory.tasks[0].id
+  };
+}
+
+async function approveTicketAsAdmin(page, taskId) {
+  const result = await page.evaluate(async ({ id, reason }) => {
+    const csrfCookie = document.cookie
+      .split('; ')
+      .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+    const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice('XSRF-TOKEN='.length)) : '';
+    const response = await fetch(`/api/v1/approvals/${id}/decide`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': csrfToken
+      },
+      body: JSON.stringify({ decision: 'APPROVED', reason })
+    });
+    return {
+      status: response.status,
+      body: response.ok ? await response.json() : await response.text()
+    };
+  }, {
+    id: taskId,
+    reason: 'Approved by system administrator after verifying the request details.'
+  });
+
+  expect(result.status).toBe(200);
+  expect(result.body.status).toBe('APPROVED');
+  expect(result.body.newTicketStatus).toBe('ASSIGNED');
+}
+
+async function confirmTicketAction(page, ticketId, buttonName, reason) {
+  await page.getByRole('button', { name: buttonName }).click();
+  const actionDialog = page.getByRole('dialog');
+  await expect(actionDialog).toBeVisible();
+  await actionDialog.getByLabel('Reason / Diagnostic Notes *').fill(reason);
+  const actionResponse = page.waitForResponse((response) =>
+    response.url().includes(`/api/v1/tickets/${ticketId}/status`) &&
+    response.request().method() === 'POST',
+  { timeout: 15_000 });
+  await actionDialog.getByRole('button', { name: 'Confirm Action' }).click();
+  expect((await actionResponse).ok()).toBeTruthy();
+  await expect(actionDialog).toHaveCount(0);
 }
 
 test.describe('EPAMS Full-Stack Browser E2E Journeys (P9)', () => {
@@ -78,7 +166,7 @@ test.describe('EPAMS Full-Stack Browser E2E Journeys (P9)', () => {
 
     // Verify reload retains session via /api/users/me
     await page.reload();
-    await expect(page.getByRole('button', { name: /Sign Out|Logout/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Account and profile menu/i })).toBeVisible();
 
     // Logout revokes session
     await logoutViaUi(page);
@@ -86,46 +174,47 @@ test.describe('EPAMS Full-Stack Browser E2E Journeys (P9)', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('E2E-02: Employee browses Service Catalog and creates a ticket', async ({ page }) => {
-    await loginViaUi(page, CREDENTIALS.employee.username, CREDENTIALS.employee.password);
-
-    await page.goto('/catalog');
-    await expect(page.getByRole('heading', { name: /Service Catalog/i })).toBeVisible();
-
-    await page.getByRole('button', { name: /Custom Request/i }).click();
-    const descField = page.locator('textarea').first();
-    await descField.fill('Playwright E2E-02 automated service ticket request');
-    await page.getByRole('button', { name: /Submit Request|Create Ticket/i }).click();
-
-    await page.goto('/tickets');
-    await expect(page.getByText(/Playwright E2E-02 automated service ticket request/i).first()).toBeVisible();
+  test('E2E-02: Employee creates a manager-approved catalog ticket', async ({ page }) => {
+    const ticket = await createApprovalTicket(page, 'E2E-02');
+    expect(ticket.ticketNumber).toMatch(/^TKT-/);
   });
 
-  test('E2E-03: Manager approves pending approval ticket; self-approval prevented', async ({ page }) => {
-    await loginViaUi(page, CREDENTIALS.manager.username, CREDENTIALS.manager.password);
-    await page.goto('/approvals');
-    await expect(page.getByRole('heading', { name: /Approval/i })).toBeVisible();
-
-    const approveBtn = page.getByRole('button', { name: /^Approve$/i }).first();
-    if (await approveBtn.isVisible()) {
-      await approveBtn.click();
-      const reasonInput = page.locator('textarea, input[type="text"]').last();
-      await reasonInput.fill('Approved via Playwright E2E-03 verification with sufficient business reason.');
-      await page.getByRole('button', { name: /Confirm|Submit/i }).click();
-      await expect(page.getByText(/403|Conflict|Error/i)).toHaveCount(0);
-    }
+  test('E2E-03: Admin approves the employee ticket through the authorized override', async ({ page }) => {
+    const ticket = await createApprovalTicket(page, 'E2E-03');
+    await loginViaUi(page, CREDENTIALS.admin.username, CREDENTIALS.admin.password);
+    await approveTicketAsAdmin(page, ticket.approvalTaskId);
   });
 
-  test('E2E-04: Department Specialist assigns, adds internal note, and resolves ticket', async ({ page }) => {
-    await loginViaUi(page, CREDENTIALS.specialist.username, CREDENTIALS.specialist.password);
-    await page.goto('/queue');
-    await expect(page.getByRole('heading', { name: /Queue|Workspace/i })).toBeVisible();
+  test('E2E-04: Admin approves, assigns, notes, and resolves an employee ticket', async ({ page }) => {
+    const ticket = await createApprovalTicket(page, 'E2E-04');
+    await loginViaUi(page, CREDENTIALS.admin.username, CREDENTIALS.admin.password);
+    await approveTicketAsAdmin(page, ticket.approvalTaskId);
+    await page.goto(`/tickets/${ticket.id}`);
+    await expect(page.getByText(ticket.ticketNumber, { exact: false }).first()).toBeVisible();
 
-    const firstTicketLink = page.locator('a[href^="/tickets/"]').first();
-    if (await firstTicketLink.isVisible()) {
-      await firstTicketLink.click();
-      await expect(page.getByText(/TKT-/i).first()).toBeVisible();
-    }
+    await expect(page.getByRole('button', { name: 'Assign to Me' })).toBeVisible();
+    const assignmentResponse = page.waitForResponse((response) =>
+      response.url().includes(`/api/v1/tickets/${ticket.id}/assign`) &&
+      response.request().method() === 'POST',
+    { timeout: 15_000 });
+    await page.getByRole('button', { name: 'Assign to Me' }).click();
+    expect((await assignmentResponse).ok()).toBeTruthy();
+    await expect(page.getByRole('button', { name: 'Mark Resolved' })).toBeVisible();
+    await expect(page.getByText('IN PROGRESS', { exact: true })).toBeVisible();
+
+    const internalNote = `Playwright internal note ${Date.now()}`;
+    await page.getByLabel('Add comment').fill(internalNote);
+    await page.getByRole('checkbox').check();
+    const commentResponse = page.waitForResponse((response) =>
+      response.url().includes(`/api/v1/tickets/${ticket.id}/comments`) &&
+      response.request().method() === 'POST',
+    { timeout: 15_000 });
+    await page.getByRole('button', { name: 'Post Comment' }).click();
+    expect((await commentResponse).ok()).toBeTruthy();
+    await expect(page.getByText(internalNote, { exact: true })).toBeVisible();
+
+    await confirmTicketAction(page, ticket.id, 'Mark Resolved', 'Completed and verified the requested work.');
+    await expect(page.getByText('RESOLVED', { exact: true })).toBeVisible();
   });
 
   test('E2E-05: Notification Bell unread badge, Notifications page, and mark-as-read sync', async ({ page }) => {
@@ -147,16 +236,15 @@ test.describe('EPAMS Full-Stack Browser E2E Journeys (P9)', () => {
     await expect(page.getByText(/SLA Compliance/i).first()).toBeVisible();
   });
 
-  test('E2E-07: Auditor cryptographic audit chain verification', async ({ page }) => {
-    await loginViaUi(page, CREDENTIALS.auditor.username, CREDENTIALS.auditor.password);
+  test('E2E-07: Admin verifies the cryptographic audit chain', async ({ page }) => {
+    await loginViaUi(page, CREDENTIALS.admin.username, CREDENTIALS.admin.password);
     await page.goto('/audit-chain');
     await expect(page.getByText(/Audit/i).first()).toBeVisible();
 
-    const verifyBtn = page.getByRole('button', { name: /Verify Chain|Run Integrity/i });
-    if (await verifyBtn.isVisible()) {
-      await verifyBtn.click();
-      await expect(page.getByText(/VALID|Verified|Intact/i).first()).toBeVisible();
-    }
+    const verifyBtn = page.getByRole('button', { name: 'Verify Cryptographic Chain' });
+    await expect(verifyBtn).toBeVisible();
+    await verifyBtn.click();
+    await expect(page.getByText(/VALID|Verified|Intact/i).first()).toBeVisible();
   });
 
   test('E2E-08: Unauthorized route & cross-user security boundaries return 403 / redirect', async ({ page }) => {
@@ -171,6 +259,53 @@ test.describe('EPAMS Full-Stack Browser E2E Journeys (P9)', () => {
 
     await page.goto('/audit-chain');
     await expect(page.getByText(/403 — Unauthorized Scope|403 — Access Denied/i)).toBeVisible();
+  });
+
+  test('E2E-09: Admin updates and reloads encrypted employee address data', async ({ page }) => {
+    await loginViaUi(page, CREDENTIALS.admin.username, CREDENTIALS.admin.password);
+    await page.goto('/profiles');
+
+    const employeeRow = page.getByRole('row').filter({ hasText: CREDENTIALS.employee.username });
+    const profileId = await employeeRow.locator('td').first().innerText();
+    const editUrl = `/profiles/${profileId}/edit`;
+    await page.goto(editUrl);
+
+    const addressField = page.locator('textarea[name="address"]');
+    await expect(addressField).toHaveValue(/.+/);
+    const originalAddress = await addressField.inputValue();
+    const updatedAddress = `Playwright E2E encrypted PII ${Date.now()}`;
+
+    try {
+      await page.locator('input[name="email"]').fill('john.doe@empora.com');
+      await addressField.fill(updatedAddress);
+      const updateResponse = page.waitForResponse((response) =>
+        response.url().endsWith(`/api/profiles/${profileId}`) &&
+        response.request().method() === 'PUT'
+      );
+      const updateNavigation = page.waitForURL('**/profiles');
+      await page.getByRole('button', { name: 'Save' }).click();
+      const [savedResponse] = await Promise.all([updateResponse, updateNavigation]);
+      expect(savedResponse.ok()).toBeTruthy();
+
+      await page.goto(editUrl);
+      await expect(page.locator('textarea[name="address"]')).toHaveValue(updatedAddress);
+    } finally {
+      await page.goto(editUrl);
+      await expect(page.locator('select[name="userId"]')).toHaveValue(/.+/);
+      await expect(page.locator('textarea[name="address"]')).toHaveValue(/.+/);
+      await page.locator('input[name="email"]').fill('john.doe@empora.com');
+      await page.locator('textarea[name="address"]').fill(originalAddress);
+      const restoreResponse = page.waitForResponse((response) =>
+        response.url().endsWith(`/api/profiles/${profileId}`) &&
+        response.request().method() === 'PUT'
+      );
+      const restoreNavigation = page.waitForURL('**/profiles');
+      await page.getByRole('button', { name: 'Save' }).click();
+      const [restoredResponse] = await Promise.all([restoreResponse, restoreNavigation]);
+      expect(restoredResponse.ok()).toBeTruthy();
+      await page.goto(editUrl);
+      await expect(page.locator('textarea[name="address"]')).toHaveValue(originalAddress);
+    }
   });
 });
 
