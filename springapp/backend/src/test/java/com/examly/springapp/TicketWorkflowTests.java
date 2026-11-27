@@ -18,10 +18,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -142,6 +144,30 @@ public class TicketWorkflowTests {
     // =========================================================================
     // 1. TICKET LIFECYCLE STATE MACHINE TESTS
     // =========================================================================
+
+    @Test
+    @Order(0)
+    @DisplayName("Ticket numbers skip values already persisted before the service starts")
+    void ticketNumberGenerationSkipsPersistedNumbers() {
+        CreateTicketRequestDTO request = new CreateTicketRequestDTO(
+                simpleItem.getId(), "IT", TicketPriority.MEDIUM, "Verify unique ticket numbering after restart."
+        );
+        ServiceTicketDTO first = commandService.createTicket(request, empAlice.getUsername());
+        AtomicLong ticketSequence = (AtomicLong) ReflectionTestUtils.getField(TicketCommandService.class, "TICKET_SEQ");
+        long sequenceBeforeSecondCreate = ticketSequence.get();
+
+        try {
+            long firstSequence = Long.parseLong(first.getTicketNumber().substring("TKT-2026-".length()));
+            ticketSequence.set(firstSequence - 1);
+
+            ServiceTicketDTO second = commandService.createTicket(request, empAlice.getUsername());
+
+            assertNotEquals(first.getTicketNumber(), second.getTicketNumber());
+            assertTrue(serviceTicketRepository.existsByTicketNumber(second.getTicketNumber()));
+        } finally {
+            ticketSequence.set(Math.max(sequenceBeforeSecondCreate, ticketSequence.get()));
+        }
+    }
 
     @Test
     @Order(1)

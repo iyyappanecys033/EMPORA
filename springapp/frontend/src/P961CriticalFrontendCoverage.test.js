@@ -22,6 +22,7 @@ import NotificationsPage from './components/notifications/NotificationsPage';
 import NotificationBell from './components/notifications/NotificationBell';
 import TicketComments from './components/tickets/TicketComments';
 import LoginModal from './components/LoginModal';
+import PreferencesPage from './components/profile/PreferencesPage';
 import notificationService from './services/notificationService';
 
 const baseAuth = {
@@ -517,13 +518,49 @@ describe('P9.6.1 Critical Frontend Workflow & Branch Coverage Suite', () => {
       expect(screen.getByTestId('pref-state')).toHaveTextContent('system|comfortable|false');
     });
 
+    test('PreferencesPage persists every setting, exposes accessible choices, and resets to defaults', async () => {
+      renderWithProviders(<PreferencesPage />, { initialEntries: ['/preferences'] });
+
+      fireEvent.click(screen.getByRole('radio', { name: /Light/ }));
+      fireEvent.click(screen.getByRole('radio', { name: /Compact \(High Density\)/ }));
+      fireEvent.click(screen.getByRole('checkbox', { name: /Start with compact icon sidebar on desktop/ }));
+      fireEvent.click(screen.getByRole('radio', { name: /Reduce Motion/ }));
+      fireEvent.click(screen.getByRole('radio', { name: /Large \(112\.5%\)/ }));
+
+      await waitFor(() => {
+        expect(JSON.parse(window.localStorage.getItem('empora.preferences'))).toMatchObject({
+          theme: 'light',
+          density: 'compact',
+          sidebarCollapsed: true,
+          reducedMotion: 'on',
+          fontScale: 'large'
+        });
+      });
+      expect(screen.getByRole('radiogroup', { name: 'Theme mode' })).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup', { name: 'Interface density' })).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup', { name: 'Motion preference' })).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup', { name: 'Text size' })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Reset to Defaults' }));
+
+      await waitFor(() => {
+        expect(JSON.parse(window.localStorage.getItem('empora.preferences'))).toMatchObject({
+          theme: 'system',
+          density: 'comfortable',
+          sidebarCollapsed: false,
+          reducedMotion: 'system',
+          fontScale: 'standard'
+        });
+      });
+    });
+
     test('Navbar renders Sign In / Register button when unauthenticated', () => {
       const onOpenLogin = jest.fn();
       renderWithProviders(<Navbar onOpenLogin={onOpenLogin} />, {
         auth: { ...baseAuth, isAuthenticated: false, currentUser: null }
       });
       fireEvent.click(screen.getByRole('button', { name: /Sign In \/ Register/i }));
-      expect(onOpenLogin).toHaveBeenCalledTimes(1);
+      expect(onOpenLogin).toHaveBeenCalledWith(false);
     });
   });
 

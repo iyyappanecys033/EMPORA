@@ -356,7 +356,11 @@ public class TicketCommandService {
     }
 
     private String generateTicketNumber() {
-        return "TKT-2026-" + String.format("%06d", TICKET_SEQ.incrementAndGet());
+        String ticketNumber;
+        do {
+            ticketNumber = "TKT-2026-" + String.format("%06d", TICKET_SEQ.incrementAndGet());
+        } while (serviceTicketRepository.existsByTicketNumber(ticketNumber));
+        return ticketNumber;
     }
 
     public ServiceTicketDTO toDto(ServiceTicket ticket) {

@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Component
+@org.springframework.context.annotation.Profile("!mysql & !prod")
 public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepo roleRepo;

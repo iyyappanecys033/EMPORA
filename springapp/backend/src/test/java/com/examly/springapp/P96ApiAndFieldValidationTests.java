@@ -2,7 +2,11 @@ package com.examly.springapp;
 
 import com.examly.springapp.model.*;
 import com.examly.springapp.repository.*;
+import com.examly.springapp.dto.CreateTicketRequestDTO;
+import com.examly.springapp.dto.LoginRequest;
+import com.examly.springapp.dto.RegisterRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,6 +49,7 @@ class P96ApiAndFieldValidationTests {
     @Autowired private ProfileRepo profileRepo;
     @Autowired private ServiceCatalogRepository catalogRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private Validator validator;
 
     private ServiceCatalogItem activeCatalogItem;
 
@@ -305,5 +312,70 @@ class P96ApiAndFieldValidationTests {
         mockMvc.perform(get("/api/v1/audit/logs").param("page", "0").param("size", "10")).andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/audit/verify")).andExpect(status().isOk());
         mockMvc.perform(get("/api/dashboard/metrics")).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("P96-VAL-05: Authentication and ticket DTO accept exact field limits and reject values beyond them")
+    void testExactAuthenticationAndTicketFieldBoundaries() {
+        LoginRequest login = new LoginRequest();
+        login.setUsername("u".repeat(100));
+        login.setPassword("p".repeat(128));
+        assertTrue(validator.validate(login).isEmpty());
+        login.setUsername("u".repeat(101));
+        assertTrue(hasViolation(login, "username"));
+        login.setUsername("u");
+        login.setPassword("p".repeat(129));
+        assertTrue(hasViolation(login, "password"));
+
+        RegisterRequest registration = new RegisterRequest();
+        registration.setUsername("u".repeat(50));
+        registration.setPassword("p".repeat(100));
+        String uniqueLocalPart = "p96" + Long.toString(System.nanoTime(), 36);
+        registration.setEmail(uniqueLocalPart + "a".repeat(64 - uniqueLocalPart.length())
+                + "@" + "d".repeat(22) + ".example.test");
+        registration.setPhone("1".repeat(30));
+        assertEquals(100, registration.getEmail().length());
+        assertTrue(validator.validate(registration).isEmpty());
+
+        registration.setUsername("u".repeat(3));
+        registration.setPassword("p".repeat(4));
+        assertTrue(validator.validate(registration).isEmpty());
+        registration.setUsername("u".repeat(51));
+        assertTrue(hasViolation(registration, "username"));
+        registration.setUsername("u".repeat(2));
+        assertTrue(hasViolation(registration, "username"));
+        registration.setUsername("u".repeat(3));
+        registration.setPassword("p".repeat(101));
+        assertTrue(hasViolation(registration, "password"));
+        registration.setPassword("p".repeat(3));
+        assertTrue(hasViolation(registration, "password"));
+        registration.setPassword("p".repeat(4));
+        registration.setEmail(registration.getEmail() + "a");
+        assertTrue(hasViolation(registration, "email"));
+        registration.setEmail(null);
+        registration.setPhone("1".repeat(31));
+        assertTrue(hasViolation(registration, "phone"));
+
+        CreateTicketRequestDTO ticket = new CreateTicketRequestDTO(
+                activeCatalogItem.getId(),
+                "D".repeat(50),
+                TicketPriority.MEDIUM,
+                "D".repeat(10)
+        );
+        assertTrue(validator.validate(ticket).isEmpty());
+        ticket.setDepartment("D".repeat(51));
+        assertTrue(hasViolation(ticket, "department"));
+        ticket.setDepartment("D");
+        ticket.setDescription("D".repeat(2000));
+        assertTrue(validator.validate(ticket).isEmpty());
+        ticket.setDescription("D".repeat(2001));
+        assertTrue(hasViolation(ticket, "description"));
+        ticket.setDescription("D".repeat(9));
+        assertTrue(hasViolation(ticket, "description"));
+    }
+
+    private boolean hasViolation(Object target, String field) {
+        return validator.validate(target).stream()
+                .anyMatch(violation -> field.equals(violation.getPropertyPath().toString()));
     }
 }

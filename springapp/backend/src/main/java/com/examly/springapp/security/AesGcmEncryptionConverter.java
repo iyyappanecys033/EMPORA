@@ -35,15 +35,6 @@ public class AesGcmEncryptionConverter implements AttributeConverter<String, Str
     private static final int GCM_TAG_LENGTH_BITS = 128;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    // 256-bit static fallback key for local dev/testing if env var is not set.
-    // In production, EMPORA_ENCRYPTION_KEY must be injected via KMS or environment variable.
-    private static final byte[] DEFAULT_DEV_KEY = new byte[] {
-            (byte) 0x6e, (byte) 0x70, (byte) 0x6f, (byte) 0x72, (byte) 0x61, (byte) 0x2d, (byte) 0x61, (byte) 0x65,
-            (byte) 0x73, (byte) 0x2d, (byte) 0x32, (byte) 0x35, (byte) 0x36, (byte) 0x2d, (byte) 0x6b, (byte) 0x65,
-            (byte) 0x79, (byte) 0x2d, (byte) 0x70, (byte) 0x72, (byte) 0x6f, (byte) 0x64, (byte) 0x75, (byte) 0x63,
-            (byte) 0x74, (byte) 0x69, (byte) 0x6f, (byte) 0x6e, (byte) 0x2d, (byte) 0x30, (byte) 0x30, (byte) 0x31
-    };
-
     private static SecretKey secretKey;
 
     static {
@@ -51,23 +42,26 @@ public class AesGcmEncryptionConverter implements AttributeConverter<String, Str
     }
 
     private static synchronized void initializeKey() {
-        try {
-            String envKey = System.getenv("EMPORA_ENCRYPTION_KEY");
-            if (envKey != null && !envKey.trim().isEmpty()) {
-                byte[] decodedKey = Base64.getDecoder().decode(envKey.trim());
-                if (decodedKey.length != 32) {
-                    throw new IllegalArgumentException("EMPORA_ENCRYPTION_KEY must be a valid 256-bit (32-byte) Base64 string");
-                }
-                secretKey = new SecretKeySpec(decodedKey, "AES");
-                log.info("[A04: Cryptographic Failures] Initialized AES-256-GCM key from external environment.");
-            } else {
-                secretKey = new SecretKeySpec(DEFAULT_DEV_KEY, "AES");
-                log.warn("[A04: Cryptographic Failures] EMPORA_ENCRYPTION_KEY not supplied in environment; using standard baseline key for development/testing.");
-            }
-        } catch (Exception e) {
-            secretKey = new SecretKeySpec(DEFAULT_DEV_KEY, "AES");
-            log.error("[A04: Cryptographic Failures] Error loading encryption key, falling back to development key", e);
+        String envKey = System.getenv("EMPORA_ENCRYPTION_KEY");
+        if (envKey == null || envKey.trim().isEmpty()) {
+            byte[] ephemeralKey = new byte[32];
+            SECURE_RANDOM.nextBytes(ephemeralKey);
+            secretKey = new SecretKeySpec(ephemeralKey, "AES");
+            log.warn("[A04: Cryptographic Failures] No external key supplied; using an ephemeral key for local development.");
+            return;
         }
+
+        byte[] decodedKey;
+        try {
+            decodedKey = Base64.getDecoder().decode(envKey.trim());
+        } catch (IllegalArgumentException e) {
+            throw new ExceptionInInitializerError("EMPORA_ENCRYPTION_KEY must be Base64 encoded");
+        }
+        if (decodedKey.length != 32) {
+            throw new ExceptionInInitializerError("EMPORA_ENCRYPTION_KEY must decode to exactly 32 bytes");
+        }
+        secretKey = new SecretKeySpec(decodedKey, "AES");
+        log.info("[A04: Cryptographic Failures] Initialized AES-256-GCM key from external environment.");
     }
 
     @Override

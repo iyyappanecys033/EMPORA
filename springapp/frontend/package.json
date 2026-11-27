@@ -17,7 +17,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --testMatch \"**/*.test.js\"",
     "eject": "react-scripts eject",
     "audit": "npm audit --audit-level=high",
     "audit:fix": "npm audit fix"
@@ -40,5 +40,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8080"
+  "proxy": "http://localhost:8080",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
+  }
 }

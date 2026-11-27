@@ -17,12 +17,6 @@ const EyeOffIcon = ({ size = 16 }) => (
   </svg>
 );
 
-const QUICK_PROFILES = [
-  { label: '🧑‍💻 John Doe (Engineer)', user: 'john_doe', pass: 'user123', role: 'Engineering' },
-  { label: '👩‍💼 Priya (HR Lead)', user: 'hr_manager', pass: 'hr123', role: 'Human Resources' },
-  { label: '🛡️ System Admin', user: 'admin', pass: 'admin123', role: 'Executive' }
-];
-
 const LoginModal = ({ isOpen, onClose, initialRegister = false }) => {
   const { login, register } = useAuth();
   const [isRegister, setIsRegister] = useState(initialRegister);
@@ -42,9 +36,8 @@ const LoginModal = ({ isOpen, onClose, initialRegister = false }) => {
     previousFocusRef.current = document.activeElement;
     setErrorObj(null);
     setShowPassword(false);
-    const focusTimer = setTimeout(() => userInputRef.current?.focus(), 30);
+    userInputRef.current?.focus();
     return () => {
-      clearTimeout(focusTimer);
       if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
         previousFocusRef.current.focus();
       }
@@ -90,13 +83,6 @@ const LoginModal = ({ isOpen, onClose, initialRegister = false }) => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleSelectQuickProfile = (profile) => {
-    setIsRegister(false);
-    setUsername(profile.user);
-    setPassword(profile.pass);
-    setErrorObj(null);
   };
 
   return (
@@ -146,38 +132,6 @@ const LoginModal = ({ isOpen, onClose, initialRegister = false }) => {
             &times;
           </button>
         </div>
-
-        {/* Quick-Fill Employee Profiles (Sign-In Mode Only) */}
-        {!isRegister && (
-          <div style={{ marginBottom: '18px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ep-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
-              ⚡ Quick Login for Employees &amp; Team
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {QUICK_PROFILES.map((p) => (
-                <button
-                  key={p.user}
-                  type="button"
-                  onClick={() => handleSelectQuickProfile(p)}
-                  className="ep-btn ep-btn--ghost ep-btn--sm"
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    padding: '6px 10px',
-                    borderRadius: '8px',
-                    background: 'var(--ep-bg-subtle)',
-                    border: '1px solid var(--ep-border)',
-                    color: 'var(--ep-text-secondary)',
-                    transition: 'all 0.2s ease'
-                  }}
-                  title={`Fill credentials for ${p.label}`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Error Alert Display */}
         {errorObj && (
